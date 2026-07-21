@@ -93,7 +93,7 @@ export default function Home() {
           <a href="#approach">Approach</a>
           <a href="#insights">Insights</a>
         </nav>
-        <a className="header-cta" href="#contact">Discuss a project <ArrowIcon /></a>
+        <a className="header-cta" href="/contact">Discuss a project <ArrowIcon /></a>
       </header>
 
       <section className="hero" id="top">
@@ -104,7 +104,7 @@ export default function Home() {
             Engineered documentation, network design, and practical consulting for commercial AV integrators that need more capacity and fewer surprises.
           </p>
           <div className="hero-actions">
-            <a className="button button-primary" href="#contact">Discuss a project <ArrowIcon /></a>
+            <a className="button button-primary" href="/contact">Discuss a project <ArrowIcon /></a>
             <a className="text-link" href="#services">Explore our work <span>↓</span></a>
           </div>
         </div>
@@ -203,7 +203,7 @@ export default function Home() {
             <p>
               Tell us what you are working on, where the risk is, and what your team needs to move forward with confidence.
             </p>
-            <a className="button button-dark" href="mailto:info@blackmountain.tech?subject=BMT%20Project%20Inquiry">Discuss a project <ArrowIcon /></a>
+            <a className="button button-dark" href="/contact">Discuss a project <ArrowIcon /></a>
           </div>
         </div>
       </section>
@@ -213,7 +213,7 @@ export default function Home() {
         <p>Commercial AV engineering for integrators.</p>
         <div>
           <a href="mailto:info@blackmountain.tech">info@blackmountain.tech</a>
-          <a href="https://www.blackmountain.tech">blackmountain.tech</a>
+          <a href="https://blackmountain.tech">blackmountain.tech</a>
         </div>
         <span>© 2026 Black Mountain Technologies</span>
       </footer>

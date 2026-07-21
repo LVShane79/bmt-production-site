@@ -91,7 +91,7 @@ export default function InsightsPage() {
         <p className="eyebrow dark"><span /> Build with confidence</p>
         <div>
           <h2>Need another set of experienced eyes on an AV project?</h2>
-          <a className="button button-dark" href="mailto:info@blackmountain.tech?subject=BMT%20Project%20Inquiry">Discuss a project <ArrowIcon /></a>
+          <a className="button button-dark" href="/contact">Discuss a project <ArrowIcon /></a>
         </div>
       </section>
 

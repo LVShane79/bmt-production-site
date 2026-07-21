@@ -18,7 +18,7 @@ export function SiteHeader({ light = false }: { light?: boolean }) {
         <a href="/#approach">Approach</a>
         <a href="/insights">Insights</a>
       </nav>
-      <a className="header-cta" href="/#contact">Discuss a project <ArrowIcon /></a>
+      <a className="header-cta" href="/contact">Discuss a project <ArrowIcon /></a>
     </header>
   );
 }
@@ -30,7 +30,7 @@ export function SiteFooter() {
       <p>Commercial AV engineering for integrators.</p>
       <div>
         <a href="mailto:info@blackmountain.tech">info@blackmountain.tech</a>
-        <a href="https://www.blackmountain.tech">blackmountain.tech</a>
+        <a href="https://blackmountain.tech">blackmountain.tech</a>
       </div>
       <span>© 2026 Black Mountain Technologies</span>
     </footer>
