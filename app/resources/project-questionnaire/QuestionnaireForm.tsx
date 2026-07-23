@@ -216,7 +216,7 @@ export default function QuestionnaireForm() {
         </section>
 
         <section className="question-section" id="delivery">
-          <div className="question-heading"><span>04</span><div><p>Delivery and constraints</p><h2>Surface decisions before they become risks.</h2></div></div>
+          <div className="question-heading"><span>04</span><div><p>Delivery and constraints</p><h2>Clarify constraints before they affect delivery.</h2></div></div>
           <div className="question-grid">
             <TextArea label="Budget and procurement approach" name="budget" value={form.budget} onChange={update} placeholder="Budget range, funding status, alternates, procurement rules…" />
             <TextArea label="Decision and approval process" name="decisionProcess" value={form.decisionProcess} onChange={update} placeholder="Who decides, what requires approval, and when?" />
