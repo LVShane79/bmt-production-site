@@ -92,6 +92,7 @@ export default function Home() {
           <a href="#services">Services</a>
           <a href="#approach">Approach</a>
           <a href="#insights">Insights</a>
+          <a href="/resources">Resources</a>
         </nav>
         <a className="header-cta" href="/contact">Discuss a project <ArrowIcon /></a>
       </header>
