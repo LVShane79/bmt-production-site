@@ -9,16 +9,10 @@ export const metadata: Metadata = {
 
 const roadmap = [
   {
-    number: "02",
+    number: "03",
     label: "Checklists",
     title: "Field-ready workflows",
     description: "Site survey, commissioning, turnover, and preventive-maintenance checklists built for real project teams.",
-  },
-  {
-    number: "03",
-    label: "Templates",
-    title: "Repeatable project documents",
-    description: "Scope worksheets, acceptance testing forms, closeout packages, and coordination templates.",
   },
   {
     number: "04",
@@ -84,6 +78,20 @@ export default function ResourcesPage() {
           </a>
           <small>Opens the interactive tool in a new window.</small>
         </article>
+      </section>
+
+      <section className="secondary-resource">
+        <div>
+          <span>02 / DISCOVERY TOOL</span>
+          <p className="eyebrow dark"><span /> New resource</p>
+          <h2>AV Project Questionnaire</h2>
+        </div>
+        <div>
+          <p>
+            Capture goals, spaces, users, systems, infrastructure, stakeholders, schedule, budget, and project risks in a structured brief your team can copy or print.
+          </p>
+          <a className="button button-dark" href="/resources/project-questionnaire">Open questionnaire <ArrowIcon /></a>
+        </div>
       </section>
 
       <section className="resource-roadmap">
