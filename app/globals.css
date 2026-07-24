@@ -768,6 +768,9 @@ footer div a { font-size: 13px; }
 .resource-roadmap-grid article > div b { color: var(--slate); font: 8px "SFMono-Regular",Consolas,monospace; letter-spacing: .1em; text-transform: uppercase; }
 .resource-roadmap-grid article > p { color: var(--deep-teal); font-size: 10px; font-weight: 700; letter-spacing: .14em; margin-top: 76px; text-transform: uppercase; }
 .resource-roadmap-grid h3 { font-size: 28px; font-weight: 500; letter-spacing: -.03em; margin: 12px 0 20px; }
+.resource-title-link { color: inherit; text-decoration: none; text-underline-offset: .16em; transition: color .18s ease; }
+.resource-title-link:hover { color: var(--deep-teal); text-decoration: underline; }
+.resource-title-link:focus-visible { border-radius: 2px; outline: 2px solid var(--deep-teal); outline-offset: 5px; }
 .resource-roadmap-grid small { color: var(--slate); font-size: 13px; line-height: 1.6; }
 .resource-roadmap-grid article > a { color: var(--deep-teal); display: inline-flex; font-size: 10px; font-weight: 700; gap: 9px; letter-spacing: .1em; margin-top: 34px; text-transform: uppercase; }
 .resources-cta { background: var(--bmt-teal); min-height: 440px; padding: 90px var(--page-pad); }

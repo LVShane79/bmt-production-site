@@ -109,7 +109,7 @@ export default function ResourcesPage() {
             <article key={item.number}>
               <div><span>{item.number}</span><b>Available now</b></div>
               <p>{item.label}</p>
-              <h3>{item.title}</h3>
+              <h3><a className="resource-title-link" href={item.href}>{item.title}</a></h3>
               <small>{item.description}</small>
               <a href={item.href}>Open resource <ArrowIcon /></a>
             </article>
