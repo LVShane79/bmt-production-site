@@ -7,18 +7,20 @@ export const metadata: Metadata = {
     "Practical commercial AV tools, checklists, templates, and field guides from Black Mountain Technologies.",
 };
 
-const roadmap = [
+const workflowResources = [
   {
     number: "03",
-    label: "Checklists",
-    title: "Field-ready workflows",
-    description: "Site survey, commissioning, turnover, and preventive-maintenance checklists built for real project teams.",
+    label: "Field checklist",
+    title: "AV Site Survey Checklist",
+    description: "Document spaces, existing systems, infrastructure, access, and coordination conditions in the field.",
+    href: "/resources/site-survey",
   },
   {
     number: "04",
-    label: "Calculators",
-    title: "More design tools",
-    description: "Display sizing, network bandwidth, storage, power, and other focused engineering utilities.",
+    label: "Coordination tool",
+    title: "Scope Responsibility Matrix",
+    description: "Assign system, infrastructure, programming, testing, and turnover responsibilities across the project team.",
+    href: "/resources/responsibility-matrix",
   },
 ];
 
@@ -96,19 +98,20 @@ export default function ResourcesPage() {
 
       <section className="resource-roadmap">
         <div className="resource-roadmap-heading">
-          <p className="eyebrow dark"><span /> What comes next</p>
-          <h2>A growing library,<br />organized around the work.</h2>
+          <p className="eyebrow dark"><span /> BMT project workflow</p>
+          <h2>Useful from discovery<br />through turnover.</h2>
           <p>
-            Speaker Lab is the first release. Additional BMT resources will be added here as they are ready to use.
+            Start with project definition, document the field, assign responsibilities, and verify the finished system.
           </p>
         </div>
         <div className="resource-roadmap-grid">
-          {roadmap.map((item) => (
+          {workflowResources.map((item) => (
             <article key={item.number}>
-              <div><span>{item.number}</span><b>In development</b></div>
+              <div><span>{item.number}</span><b>Available now</b></div>
               <p>{item.label}</p>
               <h3>{item.title}</h3>
               <small>{item.description}</small>
+              <a href={item.href}>Open resource <ArrowIcon /></a>
             </article>
           ))}
         </div>

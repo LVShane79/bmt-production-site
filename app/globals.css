@@ -769,6 +769,7 @@ footer div a { font-size: 13px; }
 .resource-roadmap-grid article > p { color: var(--deep-teal); font-size: 10px; font-weight: 700; letter-spacing: .14em; margin-top: 76px; text-transform: uppercase; }
 .resource-roadmap-grid h3 { font-size: 28px; font-weight: 500; letter-spacing: -.03em; margin: 12px 0 20px; }
 .resource-roadmap-grid small { color: var(--slate); font-size: 13px; line-height: 1.6; }
+.resource-roadmap-grid article > a { color: var(--deep-teal); display: inline-flex; font-size: 10px; font-weight: 700; gap: 9px; letter-spacing: .1em; margin-top: 34px; text-transform: uppercase; }
 .resources-cta { background: var(--bmt-teal); min-height: 440px; padding: 90px var(--page-pad); }
 .resources-cta > div { align-items: end; display: grid; gap: 70px; grid-template-columns: 1fr auto; }
 .resources-cta h2 { font-size: clamp(42px,5vw,76px); font-weight: 500; letter-spacing: -.05em; line-height: 1.02; margin: 0; max-width: 950px; }
@@ -824,6 +825,78 @@ footer div a { font-size: 13px; }
 .summary-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 12px; }
 .button-outline { background: transparent; border-color: var(--graphite); color: var(--graphite); }
 .clear-questionnaire { background: transparent; border: 0; color: var(--slate); font-size: 11px; margin-left: auto; text-decoration: underline; }
+.workflow-tool { align-items: start; display: grid; gap: clamp(42px,7vw,110px); grid-template-columns: 220px minmax(0,900px); justify-content: center; padding: 90px var(--page-pad) 140px; }
+.workflow-rail { border-top: 3px solid var(--deep-teal); position: sticky; top: 28px; }
+.workflow-rail > span { color: var(--slate); display: block; font: 9px "SFMono-Regular",Consolas,monospace; letter-spacing: .12em; padding-top: 20px; text-transform: uppercase; }
+.workflow-rail > strong { display: block; font-size: 58px; font-weight: 500; letter-spacing: -.06em; margin-top: 16px; }
+.workflow-rail > strong small { color: var(--slate); font-size: 16px; }
+.workflow-rail p { color: var(--slate); font-size: 11px; line-height: 1.55; }
+.workflow-rail button, .matrix-toolbar button { background: transparent; border: 1px solid var(--graphite); display: block; font-size: 10px; font-weight: 700; margin-top: 10px; padding: 11px; text-transform: uppercase; width: 100%; }
+.workflow-project { background: var(--mist); display: grid; gap: 18px; grid-template-columns: 1fr 1fr; margin-bottom: 60px; padding: 25px; }
+.workflow-project label span, .matrix-toolbar label span { color: var(--slate); display: block; font-size: 9px; font-weight: 700; letter-spacing: .1em; margin-bottom: 6px; text-transform: uppercase; }
+.workflow-project input, .matrix-toolbar input { background: var(--paper); border: 1px solid var(--line-light); padding: 11px; width: 100%; }
+.area-manager { border: 1px solid var(--line-light); margin-bottom: 70px; }
+.area-manager-heading { align-items: center; background: var(--mist); display: flex; justify-content: space-between; padding: 20px 22px; }
+.area-manager-heading span, .active-area-name label span { color: var(--deep-teal); display: block; font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.area-manager-heading p { color: var(--slate); font-size: 11px; margin: 5px 0 0; }
+.area-manager-heading button { background: var(--deep-teal); border: 0; color: white; font-size: 11px; font-weight: 700; padding: 11px 15px; }
+.area-tabs { border-bottom: 1px solid var(--line-light); display: flex; flex-wrap: wrap; gap: 7px; padding: 14px; }
+.area-tabs button { align-items: center; background: var(--paper); border: 1px solid var(--line-light); display: inline-flex; flex: 0 1 auto; font-size: 11px; gap: 8px; max-width: 240px; min-width: 112px; overflow: hidden; padding: 10px 14px; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
+.area-tabs button span { color: var(--deep-teal); flex: 0 0 auto; font: 8px "SFMono-Regular",Consolas,monospace; }
+.area-tabs button.active { background: var(--graphite); border-color: var(--graphite); color: white; }
+.area-tabs button.active span { color: var(--bmt-teal); }
+.active-area-name { align-items: end; display: grid; gap: 18px; grid-template-columns: 1fr auto; padding: 18px 22px 22px; }
+.active-area-name input { border: 1px solid var(--line-light); margin-top: 7px; padding: 11px; width: 100%; }
+.active-area-name button { background: transparent; border: 0; color: #8e3935; font-size: 10px; padding: 12px 0; text-decoration: underline; }
+.active-area-name button:disabled { color: var(--slate); opacity: .4; }
+.workflow-section { border-top: 1px solid var(--line-light); padding: 30px 0 80px; scroll-margin-top: 24px; }
+.question-heading small { color: var(--slate); display: block; font-size: 12px; line-height: 1.55; margin-top: 13px; }
+.workflow-items { border-left: 1px solid var(--line-light); border-top: 1px solid var(--line-light); }
+.workflow-items article { border-bottom: 1px solid var(--line-light); border-right: 1px solid var(--line-light); padding: 18px 20px; }
+.workflow-items article.complete { background: rgba(220,232,230,.45); }
+.workflow-items article.excluded { background: rgba(97,112,117,.08); }
+.workflow-items label { align-items: start; display: flex; gap: 12px; }
+.workflow-items label input { accent-color: var(--deep-teal); margin-top: 3px; }
+.workflow-items label span { font-size: 14px; line-height: 1.45; }
+.workflow-items label b { color: var(--slate); flex: 0 0 auto; font-size: 8px; letter-spacing: .08em; margin-left: auto; padding-top: 3px; text-transform: uppercase; }
+.workflow-items article.complete label span { color: var(--deep-teal); }
+.workflow-items article.complete label b { color: var(--deep-teal); }
+.workflow-items article.excluded > label:first-child span { color: var(--slate); opacity: .58; }
+.workflow-items article.excluded > label:first-child b { color: #8e3935; }
+.workflow-items .exclude-control { align-items: center; display: inline-flex; gap: 6px; margin: 12px 0 0 25px; }
+.workflow-items .exclude-control input { accent-color: #8e3935; margin: 0; }
+.workflow-items .exclude-control span { color: var(--slate); font-size: 9px; letter-spacing: .06em; text-transform: uppercase; }
+.workflow-items textarea { background: transparent; border: 0; border-left: 1px solid var(--line-light); color: var(--slate); margin: 14px 0 0 25px; outline: none; padding: 8px 12px; resize: vertical; width: calc(100% - 25px); }
+.matrix-shell { padding: 90px var(--page-pad) 140px; }
+.matrix-toolbar { align-items: end; display: grid; gap: 28px; grid-template-columns: 1fr auto 250px; margin-bottom: 35px; }
+.matrix-toolbar p { color: var(--slate); margin: 0; }
+.matrix-toolbar p strong { color: var(--deep-teal); font-size: 30px; }
+.matrix-toolbar button { margin: 0; }
+.matrix-toolbar-actions { display: grid; gap: 7px; grid-template-columns: 1fr 1fr; }
+.matrix-toolbar-actions .matrix-reset { border-color: #8e3935; color: #8e3935; }
+.matrix-guidance { align-items: start; background: var(--mist); border-left: 3px solid var(--deep-teal); display: grid; gap: 28px; grid-template-columns: 180px 1fr; margin-bottom: 28px; padding: 20px 24px; }
+.matrix-guidance span { color: var(--deep-teal); font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.matrix-guidance p { color: var(--slate); font-size: 12px; line-height: 1.55; margin: 0; }
+.matrix-table-wrap { border: 1px solid var(--line-light); overflow-x: auto; }
+.matrix-table { border-collapse: collapse; min-width: 1180px; width: 100%; }
+.matrix-table th, .matrix-table td { border-bottom: 1px solid var(--line-light); border-right: 1px solid var(--line-light); padding: 14px; text-align: left; }
+.matrix-table thead th { background: var(--graphite); color: var(--warm-white); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; }
+.matrix-table tbody th { font-size: 12px; font-weight: 600; }
+.matrix-table .matrix-workstream { color: var(--deep-teal); font-size: 10px; letter-spacing: .035em; line-height: 1.4; width: 19%; }
+.matrix-table .matrix-workstream { align-items: center; gap: 10px; }
+.matrix-workstream span { display: inline-block; max-width: calc(100% - 26px); }
+.matrix-workstream button { background: transparent; border: 0; color: #8e3935; display: block; font-size: 8px; letter-spacing: .04em; margin-top: 8px; padding: 0; text-decoration: underline; text-transform: uppercase; }
+.custom-matrix-row { background: rgba(220,232,230,.4); }
+.matrix-phase-table td { min-width: 170px; }
+.matrix-phase-table td:last-child { min-width: 230px; }
+.custom-row-adder { align-items: center; background: var(--graphite); color: var(--warm-white); display: grid; gap: 45px; grid-template-columns: .8fr 1.2fr; margin-top: 22px; padding: 26px; }
+.custom-row-adder > div:first-child span { color: var(--bmt-teal); font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.custom-row-adder p { color: rgba(245,246,242,.58); font-size: 11px; line-height: 1.5; margin: 7px 0 0; }
+.custom-row-adder > div:last-child { display: grid; grid-template-columns: 1fr auto; }
+.custom-row-adder input { border: 0; min-width: 0; padding: 12px; }
+.custom-row-adder button { background: var(--bmt-teal); border: 0; color: var(--graphite); font-size: 11px; font-weight: 800; padding: 0 18px; }
+.custom-row-adder button:disabled { opacity: .4; }
+.matrix-table select, .matrix-table input { background: var(--paper); border: 1px solid var(--line-light); padding: 9px; width: 100%; }
 
 @media (max-width: 1100px) {
   .site-header { grid-template-columns: 1fr auto; }
@@ -864,6 +937,7 @@ footer div a { font-size: 13px; }
   .resource-roadmap-heading { grid-template-columns: 1fr 1fr; }
   .resource-roadmap-heading .eyebrow { grid-column: 1/-1; }
   .questionnaire-shell { grid-template-columns: 200px minmax(0,1fr); }
+  .workflow-tool { grid-template-columns: 190px minmax(0,1fr); }
 }
 
 @media (max-width: 720px) {
@@ -979,13 +1053,24 @@ footer div a { font-size: 13px; }
   .summary-actions { align-items: stretch; flex-direction: column; }
   .summary-actions .button { justify-content: center; }
   .clear-questionnaire { margin: 10px 0 0; }
+  .workflow-tool { display: block; padding-top: 65px; }
+  .workflow-rail { margin-bottom: 55px; position: static; }
+  .workflow-project { grid-template-columns: 1fr; }
+  .area-manager-heading { align-items: flex-start; gap: 18px; }
+  .active-area-name { align-items: stretch; grid-template-columns: 1fr; }
+  .matrix-toolbar { align-items: stretch; grid-template-columns: 1fr; }
+  .matrix-guidance { grid-template-columns: 1fr; }
+  .custom-row-adder { align-items: stretch; grid-template-columns: 1fr; }
 }
 
 @media print {
-  .site-header, .questionnaire-hero, .questionnaire-rail, .question-section, footer, .summary-actions, .question-summary > div:first-child { display: none !important; }
+  .site-header, .questionnaire-hero, .questionnaire-rail, .question-section, footer, .summary-actions, .question-summary > div:first-child, .workflow-rail, .matrix-toolbar button { display: none !important; }
   .questionnaire-shell { display: block; padding: 0; }
   .question-summary { background: white; padding: 0; }
   .question-summary pre { border: 0; font-size: 11pt; margin: 0; max-height: none; overflow: visible; padding: 0; }
+  .workflow-tool, .matrix-shell { display: block; padding: 0; }
+  .workflow-section { break-inside: avoid; padding-bottom: 30px; }
+  .workflow-items textarea { min-height: 35px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
