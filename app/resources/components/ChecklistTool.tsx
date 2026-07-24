@@ -180,6 +180,92 @@ export default function ChecklistTool({ storageKey, title, sections, allowMultip
     doc.save(filename);
   };
 
+  const downloadBlankWorksheet = async () => {
+    const response = window.prompt("How many room worksheets would you like?", String(Math.max(areas.length, 1)));
+    if (response === null) return;
+    const roomCount = Number.parseInt(response.trim(), 10);
+    if (!Number.isInteger(roomCount) || roomCount < 1 || roomCount > 50) {
+      window.alert("Enter a room count from 1 to 50.");
+      return;
+    }
+
+    const { jsPDF } = await import("jspdf");
+    const doc = new jsPDF({ unit: "pt", format: "letter" });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 42;
+    const contentWidth = pageWidth - margin * 2;
+    let y = 0;
+    let currentRoom = 1;
+
+    const drawBlankHeader = () => {
+      doc.setTextColor(24, 32, 34);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.text(`BMT ${title} — Blank Field Worksheet`, margin, 34);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.text(`Room ${currentRoom} of ${roomCount}`, pageWidth - margin, 34, { align: "right" });
+      doc.setDrawColor(0, 170, 168);
+      doc.line(margin, 45, pageWidth - margin, 45);
+      doc.setTextColor(24, 32, 34);
+      doc.setFontSize(9);
+      doc.text("Project:", margin, 65);
+      doc.line(margin + 38, 67, margin + 250, 67);
+      doc.text("Date:", margin + 270, 65);
+      doc.line(margin + 300, 67, pageWidth - margin, 67);
+      doc.text("Location:", margin, 84);
+      doc.line(margin + 46, 86, margin + 250, 86);
+      doc.text("Surveyor:", margin + 270, 84);
+      doc.line(margin + 315, 86, pageWidth - margin, 86);
+      doc.text("Room name / number:", margin, 103);
+      doc.line(margin + 105, 105, pageWidth - margin, 105);
+      return 122;
+    };
+
+    const ensureBlankSpace = (height: number) => {
+      if (y + height <= pageHeight - 34) return;
+      doc.addPage();
+      y = drawBlankHeader();
+    };
+
+    for (let roomIndex = 0; roomIndex < roomCount; roomIndex += 1) {
+      currentRoom = roomIndex + 1;
+      if (roomIndex > 0) doc.addPage();
+      y = drawBlankHeader();
+
+      sections.forEach((section, sectionIndex) => {
+        ensureBlankSpace(38);
+        doc.setFillColor(220, 232, 230);
+        doc.rect(margin, y, contentWidth, 24, "F");
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9.5);
+        doc.text(`${String(sectionIndex + 1).padStart(2, "0")}  ${section.title}`, margin + 8, y + 16);
+        y += 30;
+
+        section.items.forEach((item) => {
+          const itemLines = doc.splitTextToSize(item, contentWidth - 32);
+          const rowHeight = Math.max(40, itemLines.length * 10 + 26);
+          ensureBlankSpace(rowHeight);
+          doc.setDrawColor(196, 207, 205);
+          doc.rect(margin, y, contentWidth, rowHeight);
+          doc.rect(margin + 8, y + 8, 9, 9);
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(8.3);
+          doc.setTextColor(24, 32, 34);
+          doc.text(itemLines, margin + 25, y + 15);
+          doc.setDrawColor(220, 225, 224);
+          doc.line(margin + 25, y + rowHeight - 9, pageWidth - margin - 8, y + rowHeight - 9);
+          y += rowHeight;
+        });
+        y += 10;
+      });
+    }
+
+    const filename = `${(project.trim() || "BMT-Site-Survey").replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "")}-Blank-${roomCount}-Room${roomCount === 1 ? "" : "s"}.pdf`;
+    doc.save(filename);
+  };
+
   return (
     <div className="workflow-tool">
       <aside className="workflow-rail">
@@ -188,6 +274,7 @@ export default function ChecklistTool({ storageKey, title, sections, allowMultip
         <div className="question-progress"><i style={{ width: `${percent}%` }} /></div>
         <p>{completed} of {includedItems.length} included items complete. Progress saves automatically on this device.</p>
         <button onClick={downloadPdf}>Download PDF</button>
+        {allowMultipleAreas && <button onClick={downloadBlankWorksheet}>Print blank worksheet</button>}
         <button onClick={reset}>Reset checklist</button>
       </aside>
       <div>
