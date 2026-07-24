@@ -10,14 +10,31 @@ const initialState: FormState = {
   contact: "",
   location: "",
   projectType: "",
+  constructionCondition: "",
   currentPhase: "",
   targetDate: "",
+  projectSchedule: "",
   objectives: "",
   spaces: "",
   users: "",
   systems: "",
   existingConditions: "",
+  distributionRooms: "",
+  rackCapacity: "",
+  liveCutover: "",
   network: "",
+  televisionSources: "",
+  signagePlayers: "",
+  backgroundMusic: "",
+  pagingRequirements: "",
+  avLightingIntegration: "",
+  lightingControls: "",
+  shadesAndDrapes: "",
+  hvacControl: "",
+  occupancySensors: "",
+  hospitalityIntegrations: "",
+  waterFeatureControls: "",
+  thirdPartyControls: "",
   integrations: "",
   standards: "",
   preferredBrands: "",
@@ -51,14 +68,31 @@ const summaryLabels: Record<string, string> = {
   contact: "Primary contact",
   location: "Location",
   projectType: "Project type",
+  constructionCondition: "Construction condition",
   currentPhase: "Current phase",
-  targetDate: "Target completion",
+  targetDate: "Target turnover / occupancy",
+  projectSchedule: "Overall project schedule",
   objectives: "Business objectives and success criteria",
   spaces: "Spaces and quantities",
   users: "Users and workflows",
   systems: "Systems in scope",
   existingConditions: "Existing conditions",
+  distributionRooms: "IDF and MDF count",
+  rackCapacity: "Space for new AV racks",
+  liveCutover: "Live cutover requirements",
   network: "Network and infrastructure",
+  televisionSources: "Broadcast, cable, and satellite sources",
+  signagePlayers: "Digital signage players",
+  backgroundMusic: "Background music",
+  pagingRequirements: "Paging requirements",
+  avLightingIntegration: "AV and lighting integration",
+  lightingControls: "Lighting control system",
+  shadesAndDrapes: "Drapes and shades",
+  hvacControl: "HVAC control",
+  occupancySensors: "Occupancy sensors",
+  hospitalityIntegrations: "Hospitality integrations",
+  waterFeatureControls: "Pool, tub, and water-feature controls",
+  thirdPartyControls: "Other third-party controls",
   integrations: "Required integrations",
   standards: "Standards and preferences",
   preferredBrands: "Preferred manufacturers",
@@ -170,9 +204,11 @@ export default function QuestionnaireForm() {
             <TextField label="Organization / client" name="organization" value={form.organization} onChange={update} />
             <TextField label="Primary contact" name="contact" value={form.contact} onChange={update} placeholder="Name, role, email" />
             <TextField label="Project location" name="location" value={form.location} onChange={update} />
-            <TextField label="Project type" name="projectType" value={form.projectType} onChange={update} placeholder="New construction, renovation, refresh…" />
+            <TextField label="Project type" name="projectType" value={form.projectType} onChange={update} placeholder="Office, education, hospitality, venue…" />
+            <TextField label="Construction condition" name="constructionCondition" value={form.constructionCondition} onChange={update} placeholder="New construction, renovation, expansion, refresh…" />
             <TextField label="Current project phase" name="currentPhase" value={form.currentPhase} onChange={update} placeholder="Programming, SD, DD, construction…" />
-            <TextField label="Target completion" name="targetDate" value={form.targetDate} onChange={update} type="date" />
+            <TextField label="Target turnover / occupancy date" name="targetDate" value={form.targetDate} onChange={update} type="date" />
+            <TextArea label="What is the overall project schedule?" name="projectSchedule" value={form.projectSchedule} onChange={update} placeholder="Design milestones, procurement, construction, commissioning, phased turnover, and when the facility must be ready for use." />
           </div>
         </section>
 
@@ -198,9 +234,40 @@ export default function QuestionnaireForm() {
           </fieldset>
           <div className="question-grid">
             <TextArea label="Existing systems and conditions" name="existingConditions" value={form.existingConditions} onChange={update} placeholder="What will remain, be removed, or be reused?" />
+            <TextArea label="How many IDFs and MDFs serve the project?" name="distributionRooms" value={form.distributionRooms} onChange={update} placeholder="List quantities, locations, rooms or floors served, and known ownership or access restrictions." />
+            <TextArea label="Is there room for new AV racks?" name="rackCapacity" value={form.rackCapacity} onChange={update} placeholder="Available rack units, floor or wall space, power, cooling, clearances, security, and any planned rack additions." />
+            <TextArea label="Will this require a live cutover?" name="liveCutover" value={form.liveCutover} onChange={update} placeholder="Identify systems that must remain operational, acceptable outage windows, temporary systems, phasing, and rollback requirements." />
             <TextArea label="Network, power, pathways, and cabling" name="network" value={form.network} onChange={update} placeholder="Available infrastructure, IT ownership, switch standards, VLANs, rack locations…" />
             <TextArea label="Required integrations" name="integrations" value={form.integrations} onChange={update} placeholder="UC platforms, calendaring, control, lighting, shades, security, BMS…" />
             <TextArea label="Standards and preferences" name="standards" value={form.standards} onChange={update} placeholder="Approved manufacturers, enterprise standards, support constraints…" />
+          </div>
+          <div className="brand-preferences">
+            <div className="brand-preferences-heading">
+              <span>Head-end and shared services</span>
+              <p>Identify centralized sources and building-wide services that may affect racks, distribution, licensing, networking, and system capacity.</p>
+            </div>
+            <div className="question-grid">
+              <TextArea label="Broadcast, cable, or satellite video sources" name="televisionSources" value={form.televisionSources} onChange={update} placeholder="Required providers, source and channel counts, receiver or tuner quantities, simultaneous channels, locations served, and content restrictions." />
+              <TextArea label="Digital signage players and content distribution" name="signagePlayers" value={form.signagePlayers} onChange={update} placeholder="Player and endpoint counts, centralized or local players, content platform, ownership, scheduling, and network requirements." />
+              <TextArea label="Background music requirements" name="backgroundMusic" value={form.backgroundMusic} onChange={update} placeholder="Source or service, zones, independent programs, scheduling, volume control, licensing, priority, and areas served." />
+              <TextArea label="Paging requirements" name="pagingRequirements" value={form.pagingRequirements} onChange={update} placeholder="Paging zones, call stations, all-call, priority and ducking, emergency interfaces, ambient-noise sensing, and integration with life-safety systems." />
+            </div>
+          </div>
+          <div className="brand-preferences">
+            <div className="brand-preferences-heading">
+              <span>Environmental controls and automation</span>
+              <p>Define which building, room, and hospitality systems the AV controls must monitor, command, or coordinate with.</p>
+            </div>
+            <div className="question-grid">
+              <TextArea label="Should lighting be integrated with the AV controls?" name="avLightingIntegration" value={form.avLightingIntegration} onChange={update} placeholder="Rooms and areas served, desired presets or scenes, user controls, scheduling, and which system should be the primary interface." />
+              <TextArea label="Lighting control system information" name="lightingControls" value={form.lightingControls} onChange={update} placeholder="Manufacturer, platform, processor and gateway locations, protocols, zones, loads, scene numbers, network requirements, and responsible trade." />
+              <TextArea label="Drapes, shades, and window treatments" name="shadesAndDrapes" value={form.shadesAndDrapes} onChange={update} placeholder="Motorized treatment types, locations, groups, presets, interfaces, power, local controls, and responsible design, procurement, and installation parties." />
+              <TextArea label="HVAC control or monitoring" name="hvacControl" value={form.hvacControl} onChange={update} placeholder="Temperature setpoint, fan mode, scheduling, occupancy response, monitoring only versus control, BMS interface, protocols, and responsible trade." />
+              <TextArea label="Occupancy and environmental sensors" name="occupancySensors" value={form.occupancySensors} onChange={update} placeholder="Occupancy, vacancy, daylight, temperature, humidity, air-quality, or door sensors; existing versus new; and which systems consume their data." />
+              <TextArea label="Hospitality system integrations" name="hospitalityIntegrations" value={form.hospitalityIntegrations} onChange={update} placeholder="Guest-room management, property management, room status, housekeeping, privacy, concierge, booking, access control, or other hotel platforms." />
+              <TextArea label="Pool, tub, or water-feature controls" name="waterFeatureControls" value={form.waterFeatureControls} onChange={update} placeholder="Features controlled, pumps, temperature, lighting, schedules, presets, safety interlocks, monitoring, manufacturer interfaces, and responsible trade." />
+              <TextArea label="Other third-party controls or integrations" name="thirdPartyControls" value={form.thirdPartyControls} onChange={update} placeholder="Fireplaces, gates, doors, access control, security, elevators, fountains, appliances, specialty equipment, APIs, protocols, and ownership." />
+            </div>
           </div>
           <div className="brand-preferences">
             <div className="brand-preferences-heading">
