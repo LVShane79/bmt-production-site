@@ -1,9 +1,23 @@
 import type { Metadata } from "next";
+import { JsonLd } from "../../components/JsonLd";
 import { SiteFooter, SiteHeader } from "../../components/SiteShell";
+import { absoluteUrl, organizationId } from "../../lib/site";
 import ChecklistTool, { ChecklistSection } from "../components/ChecklistTool";
 import ResourceHero from "../components/ResourceHero";
 
-export const metadata: Metadata = { title: "AV Site Survey Checklist", description: "A field-ready commercial AV site survey checklist from Black Mountain Technologies." };
+export const metadata: Metadata = {
+  title: "AV Site Survey Checklist",
+  description: "A field-ready commercial AV site survey checklist from Black Mountain Technologies.",
+  alternates: { canonical: "/resources/site-survey" },
+  openGraph: {
+    type: "website",
+    siteName: "Black Mountain Technologies",
+    title: "AV Site Survey Checklist",
+    description: "Document spaces, existing AV systems, infrastructure, access, and coordination conditions in the field.",
+    url: "/resources/site-survey",
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Black Mountain Technologies — engineering better AV projects" }],
+  },
+};
 
 const sections: ChecklistSection[] = [
   { title: "Room and use", description: "Document the physical space and how it operates.", items: [
@@ -44,5 +58,18 @@ const sections: ChecklistSection[] = [
 ];
 
 export default function SiteSurveyPage() {
-  return <main><SiteHeader /><ResourceHero number="03" kicker="Field checklist" title="AV Site Survey" emphasis="Checklist." description="A structured field workflow for documenting spaces, existing systems, infrastructure, access, and coordination conditions before design decisions are locked." /><ChecklistTool storageKey="bmt-site-survey" title="Site survey" sections={sections} allowMultipleAreas /><SiteFooter /></main>;
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    name: "BMT AV Site Survey Checklist",
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Web",
+    url: absoluteUrl("/resources/site-survey"),
+    description: metadata.description,
+    isAccessibleForFree: true,
+    provider: { "@id": organizationId },
+    offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+  };
+
+  return <main><JsonLd data={schema} /><SiteHeader /><ResourceHero number="03" kicker="Field checklist" title="AV Site Survey" emphasis="Checklist." description="A structured field workflow for documenting spaces, existing systems, infrastructure, access, and coordination conditions before design decisions are locked." /><ChecklistTool storageKey="bmt-site-survey" title="Site survey" sections={sections} allowMultipleAreas /><SiteFooter /></main>;
 }

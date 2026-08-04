@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { trackSiteEvent } from "../../lib/analytics";
 
 const parties = ["Owner", "AV consultant / designer", "AV integrator", "IT", "Electrical", "Architect", "GC", "Manufacturer / vendor", "Other"];
 const phases = [
@@ -37,17 +38,27 @@ export default function ResponsibilityMatrix() {
   const [project, setProject] = useState("");
   const [customWorkstreams, setCustomWorkstreams] = useState<string[]>([]);
   const [newWorkstream, setNewWorkstream] = useState("");
+  const hasLoadedSavedState = useRef(false);
 
   useEffect(() => {
-    try {
-      const data = JSON.parse(localStorage.getItem("bmt-responsibility-matrix-v2") || "{}");
-      setAssignments(data.assignments || {});
-      setNotes(data.notes || {});
-      setProject(data.project || "");
-      setCustomWorkstreams(data.customWorkstreams || []);
-    } catch {}
+    const frame = window.requestAnimationFrame(() => {
+      try {
+        const data = JSON.parse(localStorage.getItem("bmt-responsibility-matrix-v2") || "{}");
+        setAssignments(data.assignments || {});
+        setNotes(data.notes || {});
+        setProject(data.project || "");
+        setCustomWorkstreams(data.customWorkstreams || []);
+      } catch {
+        // Ignore malformed local data and start with a clean matrix.
+      } finally {
+        hasLoadedSavedState.current = true;
+      }
+    });
+
+    return () => window.cancelAnimationFrame(frame);
   }, []);
   useEffect(() => {
+    if (!hasLoadedSavedState.current) return;
     localStorage.setItem("bmt-responsibility-matrix-v2", JSON.stringify({ assignments, notes, project, customWorkstreams }));
   }, [assignments, notes, project, customWorkstreams]);
 
@@ -132,6 +143,12 @@ export default function ResponsibilityMatrix() {
       y += rowHeight;
     });
     const filename = `${(project.trim() || "BMT-AV-Responsibility-Matrix").replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "")}.pdf`;
+    trackSiteEvent("resource_export", {
+      resource: "responsibility_matrix",
+      format: "pdf",
+      assigned_count: assigned,
+      total_assignments: totalAssignments,
+    });
     doc.save(filename);
   };
 

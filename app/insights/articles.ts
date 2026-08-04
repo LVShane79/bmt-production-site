@@ -12,6 +12,8 @@ export type InsightArticle = {
   excerpt: string;
   readTime: string;
   focus: string;
+  publishedAt: string;
+  modifiedAt: string;
   sections: ArticleSection[];
 };
 
@@ -25,6 +27,8 @@ export const articles: InsightArticle[] = [
       "Engineering is often scrutinized when budgets tighten. The apparent savings rarely survive contact with the field.",
     readTime: "7 min read",
     focus: "AV engineering services",
+    publishedAt: "2026-07-21",
+    modifiedAt: "2026-07-21",
     sections: [
       {
         heading: "Engineering prevents expensive field decisions",
@@ -66,6 +70,8 @@ export const articles: InsightArticle[] = [
       "Standards reduce risk. Curiosity prevents stagnation. Good AV design requires both—and the judgment to know when each matters.",
     readTime: "8 min read",
     focus: "AV system design standards",
+    publishedAt: "2026-07-21",
+    modifiedAt: "2026-07-21",
     sections: [
       {
         heading: "Standards exist for good reasons",
@@ -107,6 +113,8 @@ export const articles: InsightArticle[] = [
       "A strong AV relationship begins before the equipment list—with honest questions about what matters and what those priorities cost.",
     readTime: "6 min read",
     focus: "AV project discovery",
+    publishedAt: "2026-07-21",
+    modifiedAt: "2026-07-21",
     sections: [
       {
         heading: "Listening is part of engineering",
@@ -148,6 +156,8 @@ export const articles: InsightArticle[] = [
       "Why BMT will share anonymized lessons from design rooms, coordination calls, job sites, and commissioning days.",
     readTime: "4 min read",
     focus: "commercial AV lessons learned",
+    publishedAt: "2026-07-21",
+    modifiedAt: "2026-07-21",
     sections: [
       {
         heading: "Experience is useful when it is shared",

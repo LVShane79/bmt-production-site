@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-img-element, @next/next/no-html-link-for-pages */
+import { MobileNavigation } from "./MobileNavigation";
 
 export function ArrowIcon() {
   return <span aria-hidden="true">↗</span>;
@@ -20,6 +21,7 @@ export function SiteHeader({ light = false }: { light?: boolean }) {
         <a href="/resources">Resources</a>
       </nav>
       <a className="header-cta" href="/contact">Discuss a project <ArrowIcon /></a>
+      <MobileNavigation />
     </header>
   );
 }

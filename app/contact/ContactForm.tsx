@@ -1,39 +1,74 @@
 "use client";
 
-import { FormEvent } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { ArrowIcon } from "../components/SiteShell";
+import { trackSiteEvent } from "../lib/analytics";
+
+type FormStatus = "idle" | "submitting" | "success" | "error";
 
 export function ContactForm() {
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  const [status, setStatus] = useState<FormStatus>("idle");
+  const [message, setMessage] = useState("");
+  const startedAt = useRef(0);
+  const submissionId = useRef("");
+
+  useEffect(() => {
+    startedAt.current = Date.now();
+    submissionId.current = crypto.randomUUID();
+  }, []);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const form = new FormData(event.currentTarget);
-    const name = String(form.get("name") || "");
-    const email = String(form.get("email") || "");
-    const company = String(form.get("company") || "");
-    const location = String(form.get("location") || "");
-    const service = String(form.get("service") || "");
-    const stage = String(form.get("stage") || "");
-    const timing = String(form.get("timing") || "");
-    const details = String(form.get("details") || "");
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
+    const payload = Object.fromEntries(form.entries());
+    const service = String(payload.service || "");
+    const stage = String(payload.stage || "");
 
-    const subject = `BMT project inquiry — ${company || name}`;
-    const body = [
-      "Black Mountain Technologies project inquiry",
-      "",
-      `Name: ${name}`,
-      `Email: ${email}`,
-      `Company: ${company || "Not provided"}`,
-      `Project location: ${location || "Not provided"}`,
-      `Help needed: ${service}`,
-      `Project stage: ${stage}`,
-      `Desired timing: ${timing || "Not provided"}`,
-      "",
-      "Project details:",
-      details,
-    ].join("\n");
+    setStatus("submitting");
+    setMessage("");
+    trackSiteEvent("contact_form_submit_started", {
+      service: service || "not_provided",
+      stage: stage || "not_provided",
+    });
 
-    window.location.href = `mailto:info@blackmountain.tech?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...payload,
+          startedAt: startedAt.current,
+          submissionId: submissionId.current || crypto.randomUUID(),
+        }),
+      });
+      const result = await response.json() as { ok?: boolean; message?: string; inquiryId?: string };
+
+      if (!response.ok || !result.ok) {
+        throw new Error(result.message || "We could not send the inquiry. Please try again.");
+      }
+
+      setStatus("success");
+      setMessage("Your inquiry is in. We sent a confirmation to your email and will reply from info@blackmountain.tech.");
+      trackSiteEvent("generate_lead", {
+        service: service || "not_provided",
+        stage: stage || "not_provided",
+        company_provided: Boolean(payload.company),
+        location_provided: Boolean(payload.location),
+      });
+      formElement.reset();
+      startedAt.current = Date.now();
+      submissionId.current = crypto.randomUUID();
+    } catch (error) {
+      const fallback = "We could not send the inquiry. Your information is still in the form—please try again or email info@blackmountain.tech.";
+      setStatus("error");
+      setMessage(error instanceof Error ? error.message : fallback);
+      trackSiteEvent("contact_form_error", {
+        service: service || "not_provided",
+        stage: stage || "not_provided",
+      });
+    }
   }
 
   return (
@@ -45,21 +80,25 @@ export function ContactForm() {
       </div>
 
       <div className="form-grid">
+        <label className="form-honeypot" aria-hidden="true">
+          <span>Website</span>
+          <input name="website" tabIndex={-1} autoComplete="off" />
+        </label>
         <label>
           <span>Name <i>Required</i></span>
-          <input name="name" autoComplete="name" required />
+          <input name="name" autoComplete="name" maxLength={120} required />
         </label>
         <label>
           <span>Work email <i>Required</i></span>
-          <input name="email" type="email" autoComplete="email" required />
+          <input name="email" type="email" autoComplete="email" maxLength={254} required />
         </label>
         <label>
           <span>Company</span>
-          <input name="company" autoComplete="organization" />
+          <input name="company" autoComplete="organization" maxLength={160} />
         </label>
         <label>
           <span>Project location</span>
-          <input name="location" placeholder="City, state" autoComplete="address-level2" />
+          <input name="location" placeholder="City, state" autoComplete="address-level2" maxLength={160} />
         </label>
         <label>
           <span>What do you need help with? <i>Required</i></span>
@@ -87,7 +126,7 @@ export function ContactForm() {
         </label>
         <label className="form-span-two">
           <span>When do you need help?</span>
-          <input name="timing" placeholder="A date, milestone, or general timeframe" />
+          <input name="timing" placeholder="A date, milestone, or general timeframe" maxLength={200} />
         </label>
         <label className="form-span-two">
           <span>What is the project, and where is the uncertainty? <i>Required</i></span>
@@ -95,14 +134,25 @@ export function ContactForm() {
             name="details"
             rows={7}
             placeholder="A short description of the system, the deliverable you need, and the problem your team is trying to solve."
+            maxLength={5000}
             required
           />
         </label>
       </div>
 
+      {message && (
+        <div className={`form-status form-status-${status}`} role={status === "error" ? "alert" : "status"} aria-live="polite">
+          <strong>{status === "success" ? "Inquiry received." : "The form did not send."}</strong>
+          <p>{message}</p>
+          {status === "error" && <a href="mailto:info@blackmountain.tech">Email BMT directly <ArrowIcon /></a>}
+        </div>
+      )}
+
       <div className="form-submit-row">
-        <p>This prepares an email in your mail app so you can review it before sending.</p>
-        <button className="button button-primary" type="submit">Prepare project email <ArrowIcon /></button>
+        <p>Your information goes directly to BMT. We will also email you a copy of the next-step confirmation.</p>
+        <button className="button button-primary" type="submit" disabled={status === "submitting"}>
+          {status === "submitting" ? "Sending inquiry…" : "Send project inquiry"} <ArrowIcon />
+        </button>
       </div>
     </form>
   );

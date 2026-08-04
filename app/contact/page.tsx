@@ -7,6 +7,15 @@ export const metadata: Metadata = {
   description:
     "Discuss a commercial AV documentation, network design, engineering review, or technical consulting project with Black Mountain Technologies.",
   alternates: { canonical: "/contact" },
+  openGraph: {
+    type: "website",
+    siteName: "Black Mountain Technologies",
+    title: "Discuss a Commercial AV Project",
+    description:
+      "Bring Black Mountain Technologies the incomplete scope, schedule pressure, network question, or drawing package that needs experienced engineering support.",
+    url: "/contact",
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Black Mountain Technologies — engineering better AV projects" }],
+  },
 };
 
 const nextSteps = [

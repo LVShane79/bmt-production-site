@@ -1,10 +1,23 @@
 /* eslint-disable @next/next/no-img-element, @next/next/no-html-link-for-pages */
 import type { Metadata } from "next";
+import { JsonLd } from "./components/JsonLd";
+import { SiteHeader } from "./components/SiteShell";
+import { organizationReference, siteUrl, websiteId } from "./lib/site";
 
 export const metadata: Metadata = {
-  title: "Commercial AV Engineering for Integrators | Black Mountain Technologies",
+  title: "Commercial AV Engineering for Integrators",
   description:
     "Engineered documentation, AV network design, and practical consulting for commercial AV integrators that need more capacity and fewer surprises.",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: "Black Mountain Technologies",
+    title: "Engineering Better AV Projects",
+    description:
+      "Engineered documentation, AV network design, and practical consulting for commercial AV integrators.",
+    url: "/",
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Black Mountain Technologies — engineering better AV projects" }],
+  },
 };
 
 const outcomes = [
@@ -82,20 +95,39 @@ function ArrowIcon() {
 }
 
 export default function Home() {
+  const schema = [
+    {
+      "@context": "https://schema.org",
+      ...organizationReference,
+      description:
+        "Commercial AV engineering, documentation, network design, and practical consulting for audiovisual integrators.",
+      areaServed: {
+        "@type": "Country",
+        name: "United States",
+      },
+      knowsAbout: [
+        "Commercial audiovisual engineering",
+        "AV construction documents",
+        "AV shop drawings",
+        "AV-over-IP network design",
+        "Technical consulting for AV integrators",
+      ],
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "@id": websiteId,
+      url: siteUrl,
+      name: "Black Mountain Technologies",
+      publisher: { "@id": organizationReference["@id"] },
+      inLanguage: "en-US",
+    },
+  ];
+
   return (
     <main>
-      <header className="site-header">
-        <a className="brand" href="#top" aria-label="Black Mountain Technologies home">
-          <img src="/bmt-logo-white.png" alt="Black Mountain Technologies" />
-        </a>
-        <nav aria-label="Primary navigation">
-          <a href="#services">Services</a>
-          <a href="#approach">Approach</a>
-          <a href="#insights">Insights</a>
-          <a href="/resources">Resources</a>
-        </nav>
-        <a className="header-cta" href="/contact">Discuss a project <ArrowIcon /></a>
-      </header>
+      <JsonLd data={schema} />
+      <SiteHeader />
 
       <section className="hero" id="top">
         <div className="hero-copy">

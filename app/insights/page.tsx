@@ -7,6 +7,16 @@ export const metadata: Metadata = {
   title: "Engineering Insights",
   description:
     "Field-tested thinking on commercial AV documentation, network planning, design judgment, and project delivery from Black Mountain Technologies.",
+  alternates: { canonical: "/insights" },
+  openGraph: {
+    type: "website",
+    siteName: "Black Mountain Technologies",
+    title: "Engineering Insights",
+    description:
+      "Practical thinking for people who design, sell, coordinate, install, and support commercial AV systems.",
+    url: "/insights",
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Black Mountain Technologies — engineering better AV projects" }],
+  },
 };
 
 const [featured, ...remaining] = articles;

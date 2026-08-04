@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { trackSiteEvent } from "../../lib/analytics";
 
 type FormState = Record<string, string>;
 
@@ -141,15 +142,25 @@ function TextArea({ label, name, value, onChange, placeholder }: {
 export default function QuestionnaireForm() {
   const [form, setForm] = useState<FormState>(initialState);
   const [copied, setCopied] = useState(false);
+  const hasLoadedSavedState = useRef(false);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("bmt-project-questionnaire");
-      if (saved) setForm({ ...initialState, ...JSON.parse(saved) });
-    } catch {}
+    const frame = window.requestAnimationFrame(() => {
+      try {
+        const saved = localStorage.getItem("bmt-project-questionnaire");
+        if (saved) setForm({ ...initialState, ...JSON.parse(saved) });
+      } catch {
+        // Ignore malformed local data and start with a clean questionnaire.
+      } finally {
+        hasLoadedSavedState.current = true;
+      }
+    });
+
+    return () => window.cancelAnimationFrame(frame);
   }, []);
 
   useEffect(() => {
+    if (!hasLoadedSavedState.current) return;
     localStorage.setItem("bmt-project-questionnaire", JSON.stringify(form));
   }, [form]);
 
@@ -172,6 +183,11 @@ export default function QuestionnaireForm() {
 
   const copySummary = async () => {
     await navigator.clipboard.writeText(summary.replaceAll("|", ", "));
+    trackSiteEvent("resource_export", {
+      resource: "project_questionnaire",
+      format: "clipboard",
+      completion,
+    });
     setCopied(true);
     window.setTimeout(() => setCopied(false), 2200);
   };
@@ -304,7 +320,14 @@ export default function QuestionnaireForm() {
           <pre>{summary.replaceAll("|", ", ")}</pre>
           <div className="summary-actions">
             <button className="button button-dark" onClick={copySummary}>{copied ? "Summary copied ✓" : "Copy summary"}</button>
-            <button className="button button-outline" onClick={() => window.print()}>Print / save PDF</button>
+            <button className="button button-outline" onClick={() => {
+              trackSiteEvent("resource_export", {
+                resource: "project_questionnaire",
+                format: "print_or_pdf",
+                completion,
+              });
+              window.print();
+            }}>Print / save PDF</button>
             <button className="clear-questionnaire" onClick={clearForm}>Clear questionnaire</button>
           </div>
         </section>

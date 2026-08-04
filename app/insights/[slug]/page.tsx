@@ -1,7 +1,9 @@
 /* eslint-disable @next/next/no-html-link-for-pages */
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { JsonLd } from "../../components/JsonLd";
 import { ArrowIcon, SiteFooter, SiteHeader } from "../../components/SiteShell";
+import { absoluteUrl, organizationId } from "../../lib/site";
 import { ArticleGraphic } from "../ArticleGraphic";
 import { articles, getArticle } from "../articles";
 
@@ -19,6 +21,19 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: article.title,
     description: article.excerpt,
     keywords: [article.focus, "commercial AV engineering", "Black Mountain Technologies"],
+    alternates: { canonical: `/insights/${article.slug}` },
+    openGraph: {
+      type: "article",
+      title: article.title,
+      description: article.excerpt,
+      url: `/insights/${article.slug}`,
+      siteName: "Black Mountain Technologies",
+      images: [{ url: "/og.png", width: 1200, height: 630, alt: "Black Mountain Technologies — engineering better AV projects" }],
+      publishedTime: article.publishedAt,
+      modifiedTime: article.modifiedAt,
+      authors: ["Black Mountain Technologies"],
+      tags: [article.focus, article.category, "commercial AV engineering"],
+    },
   };
 }
 
@@ -33,15 +48,22 @@ export default async function InsightArticlePage({ params }: PageProps) {
     "@type": "Article",
     headline: article.title,
     description: article.excerpt,
-    author: { "@type": "Organization", name: "Black Mountain Technologies" },
-    publisher: { "@type": "Organization", name: "Black Mountain Technologies" },
-    mainEntityOfPage: `https://www.blackmountain.tech/insights/${article.slug}`,
+    datePublished: article.publishedAt,
+    dateModified: article.modifiedAt,
+    inLanguage: "en-US",
+    image: absoluteUrl("/og.png"),
+    author: { "@id": organizationId },
+    publisher: { "@id": organizationId },
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": absoluteUrl(`/insights/${article.slug}`),
+    },
   };
 
   return (
     <main>
       <SiteHeader />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+      <JsonLd data={schema} />
 
       <article>
         <header className="article-hero">

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { trackSiteEvent } from "../../lib/analytics";
 
 export type ChecklistSection = {
   title: string;
@@ -25,24 +26,35 @@ export default function ChecklistTool({ storageKey, title, sections, allowMultip
   const [excludedByArea, setExcludedByArea] = useState<AreaRecords<boolean>>({ "area-1": {} });
   const [project, setProject] = useState("");
   const [location, setLocation] = useState("");
+  const hasLoadedSavedState = useRef(false);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(storageKey);
-      if (!saved) return;
-      const data = JSON.parse(saved);
-      const savedAreas = Array.isArray(data.areas) && data.areas.length ? data.areas : [{ id: "area-1", name: data.location || "Room 1" }];
-      setAreas(savedAreas);
-      setActiveAreaId(data.activeAreaId && savedAreas.some((area: Area) => area.id === data.activeAreaId) ? data.activeAreaId : savedAreas[0].id);
-      setCheckedByArea(data.checkedByArea || { [savedAreas[0].id]: data.checked || {} });
-      setNotesByArea(data.notesByArea || { [savedAreas[0].id]: data.notes || {} });
-      setExcludedByArea(data.excludedByArea || { [savedAreas[0].id]: {} });
-      setProject(data.project || "");
-      setLocation(data.location || "");
-    } catch {}
+    const frame = window.requestAnimationFrame(() => {
+      try {
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          const data = JSON.parse(saved);
+          const savedAreas = Array.isArray(data.areas) && data.areas.length ? data.areas : [{ id: "area-1", name: data.location || "Room 1" }];
+          setAreas(savedAreas);
+          setActiveAreaId(data.activeAreaId && savedAreas.some((area: Area) => area.id === data.activeAreaId) ? data.activeAreaId : savedAreas[0].id);
+          setCheckedByArea(data.checkedByArea || { [savedAreas[0].id]: data.checked || {} });
+          setNotesByArea(data.notesByArea || { [savedAreas[0].id]: data.notes || {} });
+          setExcludedByArea(data.excludedByArea || { [savedAreas[0].id]: {} });
+          setProject(data.project || "");
+          setLocation(data.location || "");
+        }
+      } catch {
+        // Ignore malformed local data and start with a clean checklist.
+      } finally {
+        hasLoadedSavedState.current = true;
+      }
+    });
+
+    return () => window.cancelAnimationFrame(frame);
   }, [storageKey]);
 
   useEffect(() => {
+    if (!hasLoadedSavedState.current) return;
     localStorage.setItem(storageKey, JSON.stringify({ areas, activeAreaId, checkedByArea, notesByArea, excludedByArea, project, location }));
   }, [areas, activeAreaId, checkedByArea, notesByArea, excludedByArea, project, location, storageKey]);
 
@@ -177,6 +189,12 @@ export default function ChecklistTool({ storageKey, title, sections, allowMultip
       });
     });
     const filename = `${(project.trim() || `BMT-${title}`).replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "")}.pdf`;
+    trackSiteEvent("resource_export", {
+      resource: storageKey,
+      format: "pdf",
+      completion: percent,
+      area_count: allowMultipleAreas ? areas.length : 1,
+    });
     doc.save(filename);
   };
 
@@ -263,6 +281,11 @@ export default function ChecklistTool({ storageKey, title, sections, allowMultip
     }
 
     const filename = `${(project.trim() || "BMT-Site-Survey").replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "")}-Blank-${roomCount}-Room${roomCount === 1 ? "" : "s"}.pdf`;
+    trackSiteEvent("resource_export", {
+      resource: storageKey,
+      format: "blank_worksheet_pdf",
+      area_count: roomCount,
+    });
     doc.save(filename);
   };
 

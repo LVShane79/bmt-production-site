@@ -1,32 +1,84 @@
 import type { Metadata } from "next";
+import { JsonLd } from "../components/JsonLd";
 import { ArrowIcon, SiteFooter, SiteHeader } from "../components/SiteShell";
+import { TrackedLink } from "../components/TrackedLink";
+import { absoluteUrl, organizationId } from "../lib/site";
 
 export const metadata: Metadata = {
   title: "AV Engineering Resources",
   description:
     "Practical commercial AV tools, checklists, templates, and field guides from Black Mountain Technologies.",
+  alternates: { canonical: "/resources" },
+  openGraph: {
+    type: "website",
+    siteName: "Black Mountain Technologies",
+    title: "Practical AV Engineering Resources",
+    description:
+      "Free commercial AV calculators, checklists, templates, and field guidance from Black Mountain Technologies.",
+    url: "/resources",
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Black Mountain Technologies — engineering better AV projects" }],
+  },
 };
 
 const workflowResources = [
   {
-    number: "03",
+    number: "04",
     label: "Field checklist",
     title: "AV Site Survey Checklist",
     description: "Document spaces, existing systems, infrastructure, access, and coordination conditions in the field.",
     href: "/resources/site-survey",
   },
   {
-    number: "04",
+    number: "05",
     label: "Coordination tool",
     title: "Scope Responsibility Matrix",
     description: "Assign system, infrastructure, programming, testing, and turnover responsibilities across the project team.",
     href: "/resources/responsibility-matrix",
   },
+  {
+    number: "06",
+    label: "Acceptance checklist",
+    title: "AV Commissioning & Acceptance Checklist",
+    description:
+      "Verify installation quality, system performance, user workflows, documentation, training, and turnover.",
+    href: "/resources/commissioning",
+  },
 ];
 
 export default function ResourcesPage() {
+  const resources = [
+    { name: "BMT Speaker Lab", url: "https://bmt-speaker-lab.lvshane79.chatgpt.site" },
+    { name: "BMT Projection Lab", url: absoluteUrl("/resources/projection-lab") },
+    { name: "AV Project Questionnaire", url: absoluteUrl("/resources/project-questionnaire") },
+    { name: "AV Site Survey Checklist", url: absoluteUrl("/resources/site-survey") },
+    { name: "AV Scope Responsibility Matrix", url: absoluteUrl("/resources/responsibility-matrix") },
+    { name: "AV Commissioning & Acceptance Checklist", url: absoluteUrl("/resources/commissioning") },
+  ];
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "BMT AV Engineering Resources",
+    description: metadata.description,
+    url: absoluteUrl("/resources"),
+    provider: { "@id": organizationId },
+    mainEntity: {
+      "@type": "ItemList",
+      itemListElement: resources.map((resource, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        item: {
+          "@type": "CreativeWork",
+          name: resource.name,
+          url: resource.url,
+          isAccessibleForFree: true,
+        },
+      })),
+    },
+  };
+
   return (
     <main>
+      <JsonLd data={schema} />
       <SiteHeader />
 
       <section className="resources-hero">
@@ -70,21 +122,59 @@ export default function ResourcesPage() {
             <li>Add speaker and amplifier specifications</li>
             <li>Review coverage, tap loading, and channel limits</li>
           </ul>
-          <a
+          <TrackedLink
             className="button button-dark"
             href="https://bmt-speaker-lab.lvshane79.chatgpt.site"
             target="_blank"
             rel="noreferrer"
+            eventName="resource_open"
+            eventProperties={{ resource: "speaker_lab", destination: "external" }}
           >
             Open Speaker Lab <ArrowIcon />
-          </a>
+          </TrackedLink>
           <small>Opens the interactive tool in a new window.</small>
         </article>
       </section>
 
+      <section className="featured-resource featured-resource-projector" aria-labelledby="projection-lab-heading">
+        <article>
+          <p className="eyebrow dark"><span /> Featured tool · Free resource</p>
+          <span className="resource-index">02 / TOOL</span>
+          <h2 id="projection-lab-heading">BMT Projection Lab</h2>
+          <p>
+            Solve screen geometry, lens-driven throw distance, lens shift, and preliminary image brightness in one practical workspace.
+          </p>
+          <ul>
+            <li>Select common screen sizes or enter a custom diagonal</li>
+            <li>Compare lens throw ranges and projector placement</li>
+            <li>Check optical alignment, shift, and room brightness</li>
+          </ul>
+          <TrackedLink
+            className="button button-dark"
+            href="/resources/projection-lab"
+            eventName="resource_open"
+            eventProperties={{ resource: "projection_lab", destination: "internal" }}
+          >
+            Open Projection Lab <ArrowIcon />
+          </TrackedLink>
+          <small>Opens the interactive calculator on the BMT website.</small>
+        </article>
+
+        <div className="resource-diagram projection-diagram" aria-hidden="true">
+          <div className="projection-room">
+            <div className="projection-ceiling" />
+            <div className="projection-projector"><i /><span>LENS</span></div>
+            <div className="projection-beam" />
+            <div className="projection-screen"><span>16:9</span></div>
+            <div className="projection-distance"><i /><span>THROW RANGE</span><i /></div>
+          </div>
+          <p><span>FIG. 02</span> Lens-driven projection geometry workspace</p>
+        </div>
+      </section>
+
       <section className="secondary-resource">
         <div>
-          <span>02 / DISCOVERY TOOL</span>
+          <span>03 / DISCOVERY TOOL</span>
           <p className="eyebrow dark"><span /> New resource</p>
           <h2>AV Project Questionnaire</h2>
         </div>
