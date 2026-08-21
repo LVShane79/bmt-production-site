@@ -29,6 +29,21 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: "/post/how-to-read-av-drawings-a-beginner-s-guide",
+        destination: "/insights/how-to-read-av-drawings",
+        permanent: true,
+      },
+      {
+        source: "/post/8-ohm-vs-70v-speakers-which-one-is-right-for-your-av-project",
+        destination: "/insights/8-ohm-vs-70v-speakers",
+        permanent: true,
+      },
+      {
+        source: "/post/planning-av-installation",
+        destination: "/insights/hidden-cost-of-skipping-engineering",
+        permanent: true,
+      },
+      {
         source: "/:path*",
         has: [{ type: "host", value: "www.blackmountain.tech" }],
         destination: "https://blackmountain.tech/:path*",
