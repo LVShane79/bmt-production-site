@@ -691,6 +691,10 @@ footer div a { font-size: 13px; }
 
 .editorial-hero { background: transparent; inset: 112px -3% 0 58%; mask-image: linear-gradient(to right, transparent 0%, black 34%); min-height: 0; opacity: .74; position: absolute; transform: scale(.9); transform-origin: center; }
 .editorial-hero .graphic-titleblock { display: none; }
+.ndi-cover-image { object-fit: cover; }
+.editorial-card .ndi-cover-image { object-position: center; }
+.editorial-hero.graphic-ndi-101-video-over-ip { mask-image: linear-gradient(to right, transparent 0%, black 34%); opacity: .66; }
+.editorial-hero .ndi-cover-image { object-position: 72% center; }
 
 /* Controlled tonal variation keeps the library cohesive without making every
    article cover feel like the same dark technical plate. */

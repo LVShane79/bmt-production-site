@@ -14,10 +14,91 @@ export type InsightArticle = {
   focus: string;
   publishedAt: string;
   modifiedAt: string;
+  image?: string;
+  imageAlt?: string;
   sections: ArticleSection[];
 };
 
 export const articles: InsightArticle[] = [
+  {
+    slug: "ndi-101-video-over-ip",
+    category: "Engineering Practice",
+    label: "Networked video",
+    title: "NDI 101: A Practical Introduction to Video Over IP",
+    excerpt:
+      "A plain-English introduction to NDI, how it moves video across an IP network, where NDI High Bandwidth and NDI HX differ, and what a dependable system still requires.",
+    readTime: "9 min read",
+    focus: "NDI video over IP",
+    publishedAt: "2026-09-16",
+    modifiedAt: "2026-09-16",
+    image: "/insights/ndi-101-networked-video.jpg",
+    imageAlt: "Professional PTZ camera distributing NDI video through an IP network to multiple production displays.",
+    sections: [
+      {
+        heading: "What is NDI?",
+        paragraphs: [
+          "NDI stands for Network Device Interface. It allows compatible devices and software to send and receive video, audio, and related information across an IP network. In practical terms, it turns video sources into network resources.",
+          "Instead of connecting one camera directly to one production switcher, an NDI camera connects to the network. Other authorized devices and applications can then locate and use that stream. Cameras, computers, production systems, recorders, displays, and conferencing tools can share sources without every connection being a dedicated point-to-point video cable.",
+        ],
+        pullQuote: "NDI turns video sources into network resources.",
+      },
+      {
+        heading: "A simple NDI workflow",
+        paragraphs: [
+          "Imagine a venue with three cameras, a production computer, two displays, and a streaming workstation. A traditional system may require a dedicated cable from each camera to the production area, followed by additional distribution equipment for the displays and stream.",
+          "With NDI, those cameras and computers can connect to the network. The production system selects the sources it needs, while other compatible devices can access those same sources when appropriate. The network becomes the pathway between devices, and software handles much of the routing.",
+          "An NDI stream may also include embedded audio, source identification, tally information, metadata, and camera control. Support varies by product, so the NDI logo is the beginning of the compatibility conversation—not the entire engineering process.",
+        ],
+      },
+      {
+        heading: "NDI High Bandwidth and NDI HX",
+        paragraphs: [
+          "NDI High Bandwidth is intended for high-quality, low-latency production workflows. It uses relatively light compression, helping preserve image quality and timing while requiring meaningful network capacity. It fits environments where production performance is the priority and the network has been designed accordingly.",
+          "NDI HX uses more compression to reduce bandwidth. That can make it practical for larger camera counts, remote sources, constrained networks, or devices that cannot generate a High Bandwidth stream. The tradeoff can include additional latency and more dependence on the encoding and decoding capabilities of the equipment.",
+          "Neither format is automatically better. A live production may prioritize minimal delay, while a lecture-capture or streaming system may benefit more from reduced bandwidth. The application should choose the format—not the marketing label.",
+        ],
+      },
+      {
+        heading: "Why AV teams use NDI",
+        paragraphs: [
+          "NDI makes sources easier to route, monitor, record, and reuse through software. It can reduce dedicated video cabling, simplify access to cameras and presentation sources, and connect hardware with a wide range of production and streaming applications.",
+          "It can also make expansion easier. A new destination may be able to receive an existing source through the network rather than requiring a completely new physical distribution path. That flexibility is especially useful in studios, houses of worship, lecture spaces, sports venues, overflow systems, and facilities with changing production needs.",
+          "The important qualifier is network capacity. Moving video onto the network changes the infrastructure requirement; it does not make that requirement disappear.",
+        ],
+      },
+      {
+        heading: "The network is part of the AV system",
+        paragraphs: [
+          "An NDI design should account for stream bandwidth, switch capacity, uplink speeds, network segmentation, discovery, multicast behavior, Quality of Service, security, monitoring, redundancy, and future growth. A few compressed streams may fit comfortably on an existing network. Numerous high-resolution streams may require dedicated switching and faster uplinks.",
+          "Port speed alone does not describe the complete path. Multiple streams can converge on an undersized uplink, a switch may lack the internal capacity expected of it, or automatic discovery may fail across network boundaries. Reliable results come from evaluating the route from every source to every destination.",
+        ],
+        pullQuote: "NDI may simplify video routing, but it makes network design part of the AV design.",
+      },
+      {
+        heading: "Latency still deserves attention",
+        paragraphs: [
+          "Every digital video system introduces some delay. With NDI, the result depends on the format, resolution, frame rate, camera processing, encoding, decoding, software, network performance, and display processing.",
+          "A small delay may be harmless for recording or an online stream. It matters more when a presenter is visible beside a display showing their live image, or when video must remain synchronized with sound in the room. Latency should be tested across the complete signal chain rather than judged from the transport specification alone.",
+        ],
+      },
+      {
+        heading: "NDI is one form of AV-over-IP",
+        paragraphs: [
+          "NDI is an AV-over-IP technology, but AV-over-IP is a broader category. Some platforms are designed primarily to replace matrix switchers in meeting rooms, classrooms, and commercial display systems. NDI grew largely from video production and software-based workflows.",
+          "Those categories increasingly overlap, but products still differ in compression, latency, control, security, interoperability, and intended use. Hybrid systems are normal: NDI may serve production cameras while HDMI, SDI, or another AV-over-IP platform handles other sources and destinations.",
+          "There is no prize for forcing every signal onto the same transport technology.",
+        ],
+      },
+      {
+        heading: "Start with the workflow",
+        paragraphs: [
+          "Before selecting equipment, define which sources must be available, where they will be viewed or recorded, how many streams may operate simultaneously, the required image quality, acceptable latency, who owns the network, and what should happen when a connection or switch fails.",
+          "Those answers determine whether the right approach is NDI High Bandwidth, NDI HX, another AV-over-IP platform, traditional video cabling, or a combination. NDI is valuable because it creates flexibility—not because it removes the need for engineering.",
+        ],
+        pullQuote: "Choose the transport after defining the workflow, not before.",
+      },
+    ],
+  },
   {
     slug: "how-to-read-av-drawings",
     category: "Engineering Practice",

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 
 type Projector = {
   brand: string; model: string; lumens: number; resolution: string;
@@ -120,6 +121,8 @@ export default function ProjectorCalculator() {
     if (!encoded) return;
     try {
       const saved = JSON.parse(atob(encoded));
+      // Shared designs are intentionally restored after mount because the URL is browser-only state.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (saved.aspect in ratios) setAspect(saved.aspect);
       [["screenInput", setScreenInput], ["gain", setGain], ["lightLoss", setLightLoss], ["screenBottom", setScreenBottom], ["horizontalOffset", setHorizontalOffset]].forEach(([key, setter]) => {
         const value = saved[key as string];
@@ -128,7 +131,7 @@ export default function ProjectorCalculator() {
       if (typeof saved.screenInput === "number" && !screenPresets[saved.aspect || "16:9"]?.includes(saved.screenInput)) setCustomSize(true);
       if (["bottom", "center", "top"].includes(saved.projectionAlignment)) setProjectionAlignment(saved.projectionAlignment);
       if (saved.ambient in presets) setAmbient(saved.ambient);
-      if (saved.projector?.brand && saved.projector?.model) setProjector(saved.projector);
+      if (saved.projector?.brand && saved.projector?.model) activateProjector(saved.projector, false);
     } catch {
       // Ignore malformed shared-state URLs and keep the calculator defaults.
     }
@@ -168,10 +171,6 @@ export default function ProjectorCalculator() {
     return { width, height, diagonalFt, minDistance, maxDistance, selectedDistance, requiredThrow, throwPosition, possibleDiagonalMin, possibleDiagonalMax, lensHeight, lensHeightMin, lensHeightMax, horizontalLimit, area, deliveredLumens, footLamberts, nits, requiredLumens, verticalShift, horizontalShift, shiftFit, distanceFit, rearFaceDistance, clearanceDistance };
   }, [aspect, screenInput, projector, lightLoss, gain, ambient, screenBottom, projectionAlignment, manualLensHeight, horizontalOffset, calculationMode, mountDistance, knownDistance, selectedThrow, chassisDepth, lensInset, serviceClearance, brightnessMode, measuredLumens]);
 
-  useEffect(() => {
-    setSelectedThrow((value) => Math.min(projector.throwMax, Math.max(projector.throwMin, value)));
-  }, [projector]);
-
   async function search() {
     if (!query.trim()) return;
     setSearching(true); setMessage(""); setResults([]);
@@ -195,10 +194,11 @@ export default function ProjectorCalculator() {
     finally { setSearching(false); }
   }
 
-  function useProjector(next: Projector) {
+  function activateProjector(next: Projector, closeDialog = true) {
     setProjector(next);
+    setSelectedThrow((value) => Math.min(next.throwMax, Math.max(next.throwMin, value)));
     setLibrary((current) => current.some((item) => item.brand === next.brand && item.model === next.model) ? current : [...current, next]);
-    setDialog(false);
+    if (closeDialog) setDialog(false);
   }
 
   async function share() {
@@ -218,7 +218,6 @@ export default function ProjectorCalculator() {
   const brightnessFit = calc.deliveredLumens >= calc.requiredLumens;
   const brightnessPosition = Math.min(100, Math.max(0, calc.footLamberts / 100 * 100));
   const brightnessClass = calc.footLamberts < 22 ? "Dark room" : calc.footLamberts < 40 ? "Controlled presentation" : calc.footLamberts < 70 ? "Classroom / meeting room" : "Bright ambient light";
-  const screenWidthPercent = Math.min(86, Math.max(36, 52 + (calc.width - 10) * 1.4));
   const projectorLeft = Math.min(43, Math.max(8, 55 - calc.selectedDistance * 1.35));
   const projectorTop = projectionAlignment === "top" ? 23 : projectionAlignment === "bottom" ? 73 : 48;
   const beamScreenTop = 22;
@@ -237,7 +236,7 @@ export default function ProjectorCalculator() {
 
   return <main className="projection-lab">
     <header className="topbar">
-      <a className="brand" href="/resources"><img src="/bmt-logo-white.png" alt="Black Mountain Technologies" /><span>Projection Lab</span></a>
+      <a className="brand" href="/resources"><Image src="/bmt-logo-white.png" alt="Black Mountain Technologies" width={420} height={116} priority /><span>Projection Lab</span></a>
       <nav><a href="/resources">Resources</a><a href="#calculator">Calculator</a><a href="#brightness">Brightness</a><a href="#method">Method</a></nav>
       <div className="header-actions"><button className="share" onClick={() => window.print()}>Print design</button><button className="share" onClick={share}>{shareLabel} <span>↗</span></button></div>
     </header>
@@ -249,11 +248,11 @@ export default function ProjectorCalculator() {
 
     {shortlist.length > 0 && <section className="compare-section">
       <div className="section-title compact"><p className="eyebrow dark">Shortlist</p><h2>Compare the physics.</h2><p>Same screen, room, and loss assumptions. No star ratings, no affiliate nonsense.</p></div>
-      <div className="compare-grid">{shortlist.map((item) => {
+        <div className="compare-grid">{shortlist.map((item) => {
         const min = item.throwMin * calc.width, max = item.throwMax * calc.width;
         const lumens = brightnessMode === "measured" && item.model === projector.model ? measuredLumens : brightnessMode === "calibrated" ? item.lumens * (1 - lightLoss / 100) : item.lumens;
         const fl = lumens * gain / calc.area;
-        return <article key={`${item.brand}-${item.model}-${item.lens}`}><button className="remove" onClick={() => toggleShortlist(item)}>×</button><span>{item.brand}</span><h3>{item.model}</h3><p>{item.lens || "Integrated lens"}</p><dl><div><dt>Throw</dt><dd>{min.toFixed(1)}–{max.toFixed(1)} ft</dd></div><div><dt>Light</dt><dd>{fl.toFixed(0)} fL</dd></div><div><dt>Shift</dt><dd>+{item.shiftVUp}/−{item.shiftVDown}% V</dd></div></dl><button className="secondary" onClick={() => setProjector(item)}>Make active</button></article>;
+        return <article key={`${item.brand}-${item.model}-${item.lens}`}><button className="remove" onClick={() => toggleShortlist(item)}>×</button><span>{item.brand}</span><h3>{item.model}</h3><p>{item.lens || "Integrated lens"}</p><dl><div><dt>Throw</dt><dd>{min.toFixed(1)}–{max.toFixed(1)} ft</dd></div><div><dt>Light</dt><dd>{fl.toFixed(0)} fL</dd></div><div><dt>Shift</dt><dd>+{item.shiftVUp}/−{item.shiftVDown}% V</dd></div></dl><button className="secondary" onClick={() => activateProjector(item, false)}>Make active</button></article>;
       })}</div>
     </section>}
 
@@ -365,11 +364,11 @@ export default function ProjectorCalculator() {
           <label><span>Vertical shift up · %</span><input type="number" min="0" value={manual.shiftVUp} onChange={(event) => setManual({ ...manual, shiftVUp: Number(event.target.value) })} /></label>
           <label><span>Vertical shift down · %</span><input type="number" min="0" value={manual.shiftVDown} onChange={(event) => setManual({ ...manual, shiftVDown: Number(event.target.value) })} /></label>
           <label><span>Horizontal shift · ±%</span><input type="number" min="0" value={manual.shiftH} onChange={(event) => setManual({ ...manual, shiftH: Number(event.target.value) })} /></label>
-          <button className="primary wide" onClick={() => useProjector(manual)} disabled={!manual.brand || !manual.model || manual.throwMin <= 0 || manual.throwMax < manual.throwMin || manual.lumens <= 0}>Use manual parameters <span>→</span></button>
+          <button className="primary wide" onClick={() => activateProjector(manual)} disabled={!manual.brand || !manual.model || manual.throwMin <= 0 || manual.throwMax < manual.throwMin || manual.lumens <= 0}>Use manual parameters <span>→</span></button>
         </div>}
         {message && <div className="message">{message}</div>}
-        {results.length > 0 && <div className="search-results"><span className="selection-label">{dialogTab === "upload" ? "Extracted specification" : `${results.length} researched option${results.length === 1 ? "" : "s"}`}</span>{results.map((result) => <article className="search-result" key={`${result.brand}-${result.model}-${result.lens}`}><h3>{result.brand} <b>{result.model}</b></h3><div className="result-specs"><span>Output<b>{result.lumens.toLocaleString()} lm</b></span><span>Throw range<b>{result.throwMin}–{result.throwMax}:1</b></span><span>Lens<b>{result.lens || "Integrated"}</b></span><span>Shift<b>+{result.shiftVUp}/−{result.shiftVDown}% V · ±{result.shiftH}% H</b></span></div><p>{result.note}</p>{result.source && <a href={result.source} target="_blank" rel="noreferrer">Open manufacturer source ↗</a>}<div className="result-actions"><button className="primary" onClick={() => useProjector(result)}>Use this combination <span>→</span></button><button className="secondary" onClick={() => toggleShortlist(result)}>{shortlist.some((item) => item.brand === result.brand && item.model === result.model && item.lens === result.lens) ? "Remove from compare" : "Add to compare"}</button></div></article>)}</div>}
-        <div className="library"><span className="selection-label">Reference library</span>{library.map((item) => <button key={`${item.brand}-${item.model}`} className={item.model === projector.model ? "selected" : ""} onClick={() => { setProjector(item); setDialog(false); }}><b>{item.brand}</b><span>{item.model}</span><em>{item.throwMin}–{item.throwMax}:1</em></button>)}</div>
+        {results.length > 0 && <div className="search-results"><span className="selection-label">{dialogTab === "upload" ? "Extracted specification" : `${results.length} researched option${results.length === 1 ? "" : "s"}`}</span>{results.map((result) => <article className="search-result" key={`${result.brand}-${result.model}-${result.lens}`}><h3>{result.brand} <b>{result.model}</b></h3><div className="result-specs"><span>Output<b>{result.lumens.toLocaleString()} lm</b></span><span>Throw range<b>{result.throwMin}–{result.throwMax}:1</b></span><span>Lens<b>{result.lens || "Integrated"}</b></span><span>Shift<b>+{result.shiftVUp}/−{result.shiftVDown}% V · ±{result.shiftH}% H</b></span></div><p>{result.note}</p>{result.source && <a href={result.source} target="_blank" rel="noreferrer">Open manufacturer source ↗</a>}<div className="result-actions"><button className="primary" onClick={() => activateProjector(result)}>Use this combination <span>→</span></button><button className="secondary" onClick={() => toggleShortlist(result)}>{shortlist.some((item) => item.brand === result.brand && item.model === result.model && item.lens === result.lens) ? "Remove from compare" : "Add to compare"}</button></div></article>)}</div>}
+        <div className="library"><span className="selection-label">Reference library</span>{library.map((item) => <button key={`${item.brand}-${item.model}`} className={item.model === projector.model ? "selected" : ""} onClick={() => activateProjector(item)}><b>{item.brand}</b><span>{item.model}</span><em>{item.throwMin}–{item.throwMax}:1</em></button>)}</div>
       </div>
     </section></div>}
   </main>;

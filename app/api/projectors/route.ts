@@ -13,9 +13,25 @@ Interpret the request conversationally:
 
 Return ONLY JSON as {"options":[...]} with 1–5 option objects. Every option must contain: brand (string), model (projector model only), lumens (numeric ISO/center/ANSI lumens; use the manufacturer's main published value), resolution (string), throwMin (number), throwMax (number), lens (selected compatible lens model or "Integrated"), shiftVUp (maximum upward vertical lens shift as percent of image height), shiftVDown (maximum downward shift as percent of image height), shiftH (maximum left/right horizontal shift as percent of image width), source (official URL), note (a concise lineup or lens-positioning blurb plus caveats). If no defensible current combination can be sourced, return {"error":"specific explanation and the missing detail needed to continue"}.`;
 
-function outputText(response: any) {
+type ResponsePart = { type?: string; text?: string };
+type ResponseItem = { content?: ResponsePart[] };
+type ResponsesPayload = {
+  output_text?: string;
+  output?: ResponseItem[];
+  error?: { message?: string };
+};
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value !== null && typeof value === "object" ? value as Record<string, unknown> : {};
+}
+
+function outputText(response: ResponsesPayload) {
   if (typeof response.output_text === "string") return response.output_text;
-  return (response.output || []).flatMap((item: any) => item.content || []).filter((part: any) => part.type === "output_text").map((part: any) => part.text).join("\n");
+  return (response.output || [])
+    .flatMap((item) => item.content || [])
+    .filter((part) => part.type === "output_text")
+    .map((part) => part.text || "")
+    .join("\n");
 }
 
 export async function POST(request: NextRequest) {
@@ -44,20 +60,23 @@ export async function POST(request: NextRequest) {
       headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
       body: JSON.stringify({ model: "gpt-5.6-luna", reasoning: { effort: "low" }, tools, tool_choice: "required", input: `${prompt}\nResearch request: ${query}\nRoom constraints: ${constraints || "none supplied"}`, max_output_tokens: 2400 }),
     });
-    const data = await response.json();
+    const data = await response.json() as ResponsesPayload;
     if (!response.ok) throw new Error(data?.error?.message || "The research request could not be completed.");
     const match = outputText(data).match(/\{[\s\S]*\}/);
     if (!match) throw new Error("The AI response did not contain usable specification data.");
-    const result = JSON.parse(match[0]);
-    if (result.error) throw new Error(result.error);
+    const result = asRecord(JSON.parse(match[0]));
+    if (result.error) throw new Error(String(result.error));
     const rawOptions = Array.isArray(result.options) ? result.options : [result];
-    const projectors = rawOptions.slice(0, 5).map((item: any) => ({
+    const projectors = rawOptions.slice(0, 5).map((value) => {
+      const item = asRecord(value);
+      return {
       brand: String(item.brand || "").trim(), model: String(item.model || "").trim(),
       lumens: Number(item.lumens), resolution: String(item.resolution || "Not published"),
       throwMin: Number(item.throwMin), throwMax: Number(item.throwMax), lens: String(item.lens || ""),
       shiftVUp: Number(item.shiftVUp), shiftVDown: Number(item.shiftVDown), shiftH: Number(item.shiftH),
       source: String(item.source || ""), note: String(item.note || "Verify all values against the current manufacturer lens manual."),
-    })).filter((item: any) => item.brand && item.model && item.lumens && item.throwMin && item.throwMax);
+      };
+    }).filter((item) => item.brand && item.model && item.lumens && item.throwMin && item.throwMax);
     if (!projectors.length) throw new Error("The official sources did not provide a complete projector and lens option.");
     return NextResponse.json({ projector: projectors[0], projectors });
   } catch (error) {

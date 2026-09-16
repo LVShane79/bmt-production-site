@@ -17,6 +17,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { slug } = await params;
   const article = getArticle(slug);
   if (!article) return {};
+  const socialImage = article.image || "/og.png";
+  const socialImageAlt = article.imageAlt || "Black Mountain Technologies — engineering better AV projects";
   return {
     title: article.title,
     description: article.excerpt,
@@ -28,7 +30,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description: article.excerpt,
       url: `/insights/${article.slug}`,
       siteName: "Black Mountain Technologies",
-      images: [{ url: "/og.png", width: 1200, height: 630, alt: "Black Mountain Technologies — engineering better AV projects" }],
+      images: [{ url: socialImage, width: article.image ? 1400 : 1200, height: article.image ? 788 : 630, alt: socialImageAlt }],
       publishedTime: article.publishedAt,
       modifiedTime: article.modifiedAt,
       authors: ["Black Mountain Technologies"],
@@ -51,7 +53,7 @@ export default async function InsightArticlePage({ params }: PageProps) {
     datePublished: article.publishedAt,
     dateModified: article.modifiedAt,
     inLanguage: "en-US",
-    image: absoluteUrl("/og.png"),
+    image: absoluteUrl(article.image || "/og.png"),
     author: { "@id": organizationId },
     publisher: { "@id": organizationId },
     mainEntityOfPage: {

@@ -75,6 +75,21 @@ function FieldNotesGraphic() {
 }
 
 export function ArticleGraphic({ slug, index = 1, variant = "card" }: GraphicProps) {
+  if (slug === "ndi-101-video-over-ip") {
+    return (
+      <div className={`editorial-graphic editorial-${variant} graphic-${slug}`}>
+        <Image
+          className="ndi-cover-image"
+          src="/insights/ndi-101-networked-video.jpg"
+          alt="Professional PTZ camera distributing NDI video through an IP network to production displays"
+          fill
+          priority={variant === "hero"}
+          sizes={variant === "hero" ? "(max-width: 760px) 100vw, 55vw" : "(max-width: 980px) 100vw, 33vw"}
+        />
+      </div>
+    );
+  }
+
   let subject = <DocumentationGraphic />;
   let code = "DOCUMENTATION / RISK";
 
@@ -103,3 +118,4 @@ export function ArticleGraphic({ slug, index = 1, variant = "card" }: GraphicPro
     </div>
   );
 }
+import Image from "next/image";
