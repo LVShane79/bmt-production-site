@@ -23,8 +23,11 @@ For a new article:
 2. Add the approved record to `app/insights/articles.ts`.
 3. Add or intentionally reuse an `ArticleGraphic` treatment.
 4. Run the production build and review the article page on desktop and mobile.
-5. Commit and push to `main` only after BMT approval. Vercel publishes the
-   connected production branch.
+5. Commit and push to `main` only after BMT approval.
+
+The existing Vercel project predates this GitHub repository. A push does not by
+itself guarantee a production deployment until the Vercel Git integration is
+connected and verified.
 
 Cloud chats may read this public repository for current website context. A
 cloud chat still needs an authorized GitHub connection or a local handoff to
