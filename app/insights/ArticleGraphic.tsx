@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 type GraphicProps = {
   slug: string;
   index?: number;
@@ -75,13 +77,25 @@ function FieldNotesGraphic() {
 }
 
 export function ArticleGraphic({ slug, index = 1, variant = "card" }: GraphicProps) {
-  if (slug === "ndi-101-video-over-ip") {
+  const articleImage = slug === "ndi-101-video-over-ip"
+    ? {
+        src: "/insights/ndi-101-networked-video.jpg",
+        alt: "Professional PTZ camera distributing NDI video through an IP network to production displays",
+      }
+    : slug === "ipmx-101-open-av-over-ip-standard"
+      ? {
+          src: "/insights/ipmx-101-open-av-over-ip.jpg",
+          alt: "Professional AV sources and displays interconnected through an IPMX media network",
+        }
+      : null;
+
+  if (articleImage) {
     return (
       <div className={`editorial-graphic editorial-${variant} graphic-${slug}`}>
         <Image
           className="ndi-cover-image"
-          src="/insights/ndi-101-networked-video.jpg"
-          alt="Professional PTZ camera distributing NDI video through an IP network to production displays"
+          src={articleImage.src}
+          alt={articleImage.alt}
           fill
           priority={variant === "hero"}
           sizes={variant === "hero" ? "(max-width: 760px) 100vw, 55vw" : "(max-width: 980px) 100vw, 33vw"}
@@ -118,4 +132,3 @@ export function ArticleGraphic({ slug, index = 1, variant = "card" }: GraphicPro
     </div>
   );
 }
-import Image from "next/image";

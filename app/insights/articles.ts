@@ -100,6 +100,96 @@ export const articles: InsightArticle[] = [
     ],
   },
   {
+    slug: "ipmx-101-open-av-over-ip-standard",
+    category: "Engineering Practice",
+    label: "Open AV-over-IP",
+    title: "IPMX 101: The Open Standard That Could Reshape AV-over-IP",
+    excerpt:
+      "IPMX promises standards-based AV-over-IP without locking an entire system to one manufacturer. Here is what it does, who is supporting it, and where it makes sense today.",
+    readTime: "12 min read",
+    focus: "IPMX open AV-over-IP standard",
+    publishedAt: "2026-09-16",
+    modifiedAt: "2026-09-16",
+    image: "/insights/ipmx-101-open-av-over-ip.jpg",
+    imageAlt: "Professional AV sources and displays interconnected through an IPMX media network.",
+    sections: [
+      {
+        heading: "What is IPMX?",
+        paragraphs: [
+          "AV-over-IP has changed how audiovisual systems are designed. Encoders and decoders can be placed where they are needed, while signals are routed across a network instead of through a fixed HDMI or SDI matrix. One persistent problem remains: most commercial AV-over-IP platforms are proprietary.",
+          "IPMX stands for Internet Protocol Media Experience. It is a collection of open standards designed to transport professional video, audio, and control data over Ethernet networks. Its most important goal is interoperability: an encoder from one manufacturer should be able to work with a decoder, processor, or display from another.",
+          "IPMX builds on technologies already used in professional broadcast, including SMPTE ST 2110 for media transport, AES67-compatible audio, Precision Time Protocol for synchronization, NMOS for discovery and routing, and JPEG XS for high-quality, low-latency compression. It adds the HDMI metadata, EDID, HDR, content protection, and security behaviors required in commercial AV.",
+        ],
+        pullQuote: "IPMX is an effort to bring open interoperability from modern broadcast networking into commercial AV.",
+      },
+      {
+        heading: "It is a framework, not another codec",
+        paragraphs: [
+          "IPMX is sometimes compared directly with individual AV-over-IP products, but it is not one codec or one box. It is a framework that defines how different parts of a media system work together.",
+          "An IPMX device may transport uncompressed video or use JPEG XS compression. Audio can be separated from video and routed independently. Devices advertise their capabilities through NMOS and establish connections using standardized methods. That modular design allows products with different capabilities and bandwidth requirements to participate in the same ecosystem.",
+        ],
+      },
+      {
+        heading: "Uncompressed video and JPEG XS",
+        paragraphs: [
+          "Uncompressed video offers excellent image quality and very low latency, but it consumes substantial bandwidth. A 1080p60 signal can require roughly 2.5 Gbps, while uncompressed 4K60 may require approximately 10 to 15 Gbps depending on color sampling and bit depth. Those requirements quickly move endpoints toward 10GbE or 25GbE connections.",
+          "JPEG XS is a lightweight compression method built for professional real-time video. It can reduce a 4K signal enough to travel over a much smaller connection while maintaining very high image quality and extremely low latency. This makes it one of the most important pieces of IPMX for commercial AV.",
+          "Designers still need to verify the exact profile, image quality, latency, and bitrate supported by every product. A stream that technically fits on a 1GbE port may leave very little room for overhead, additional media, or real-world operating margin.",
+        ],
+      },
+      {
+        heading: "Why an open standard matters",
+        paragraphs: [
+          "A proprietary platform generally ties the endpoints, management tools, feature roadmap, and replacement options to one manufacturer. If a product is discontinued or no longer fits the client's needs, changing vendors can mean replacing much more of the system than one device.",
+          "A mature IPMX ecosystem could let designers select the best product for each function. It offers the potential for more manufacturer choice, less long-term lock-in, easier expansion, independent audio and video routing, and better integration between presentation and broadcast systems.",
+          "Open does not mean identical. Products will still differ in supported resolutions, bandwidth, compression profiles, security, processing, and control features. Certification and careful product selection remain essential.",
+        ],
+        pullQuote: "Interoperability creates options, but it does not replace engineering.",
+      },
+      {
+        heading: "Is IPMX ready today?",
+        paragraphs: [
+          "For several years, IPMX was discussed more often than it was deployed. That is changing. The Alliance for IP Media Solutions now operates an IPMX certification program and maintains a registry of certified products.",
+          "Manufacturers and technology developers participating in the ecosystem include Matrox Video, PlexusAV, Evertz, Cobalt Digital, Panasonic, Barco, NovaStar, Bridge Technologies, intoPIX, Adeas-Nextera, and Macnica. Their products range from HDMI and SDI gateways to production switchers, high-density routing, test equipment, LED processing, and the codec technology used inside other manufacturers' devices.",
+          "The market is still weighted toward broadcast, production, processing, and gateway equipment. There are fewer inexpensive wall-plate encoders and compact display decoders than integrators are accustomed to finding in established proprietary product families. IPMX is real and deployable, but it is not yet the automatic choice for every meeting room, restaurant, or small commercial system.",
+        ],
+      },
+      {
+        heading: "The network is part of the system",
+        paragraphs: [
+          "The phrase standard Ethernet can create the wrong impression. A large IPMX system cannot simply be attached to any switch with open ports. The design may require nonblocking switching capacity, multicast management, PTP-aware switching, appropriate Quality of Service, adequate packet buffers, high-speed uplinks, monitoring, and carefully planned redundancy.",
+          "Bandwidth must be calculated across the entire path. Multicast prevents an encoder from creating a separate stream for every receiver, but it does not eliminate traffic. If ten different 1Gbps streams must cross an uplink, that link still needs to carry approximately 10Gbps of video before overhead and engineering margin are considered.",
+          "Timing is equally important. PTP synchronizes media across the network, so grandmasters, clock domains, switch behavior, and failure modes belong in the design—not on a list of items to figure out during commissioning.",
+        ],
+        pullQuote: "Standard Ethernet does not mean any Ethernet switch will do.",
+      },
+      {
+        heading: "Where IPMX makes sense",
+        paragraphs: [
+          "Auditoriums and multipurpose venues can use IPMX to share presentation sources and cameras between the in-room AV system and a live-production workflow. Enterprise and university campuses can use it as a common media backbone between studios, briefing rooms, training spaces, auditoriums, control rooms, and athletic facilities.",
+          "Control rooms are a natural fit because they often combine high-quality video, KVM extension, multiviewing, video walls, and redundant network paths. Large arenas, casinos, resorts, and sportsbooks may also benefit from centralized sources, independent audio routing, and a standards-based path between distribution and production systems.",
+          "For smaller and price-sensitive projects, established proprietary AV-over-IP platforms may still offer lower-cost endpoints, simpler commissioning, more mature control modules, and a broader selection of wall plates and specialty devices.",
+        ],
+      },
+      {
+        heading: "Control and redundancy",
+        paragraphs: [
+          "NMOS provides standardized discovery and connection management, but it does not need to become the operator interface. A Crestron, Q-SYS, or web-based control system can present familiar source names, destinations, room modes, presets, route status, and device faults while requesting IPMX connections behind the scenes.",
+          "Critical systems can use SMPTE ST 2022-7 seamless protection switching. A transmitter sends duplicate streams over independent network paths, and the receiver reconstructs the output from the valid packets. True redundancy requires separate switches, interfaces, paths, and failure domains. Two VLANs on one switch provide organization, not redundancy.",
+        ],
+      },
+      {
+        heading: "Plan for IPMX without deploying it everywhere",
+        paragraphs: [
+          "A project can prepare for IPMX without buying a complete IPMX system today. High-speed single-mode or appropriate multimode fiber, 10GbE- or 25GbE-capable switching, multicast planning, PTP-aware infrastructure, sufficient uplink capacity, and space for future gateways create a practical migration path.",
+          "For most smaller integrators, IPMX should be treated as a credible option rather than a universal replacement for every proprietary platform. It deserves serious consideration in broadcast and commercial AV crossover spaces, large auditoriums, enterprise campuses, arenas, control rooms, large-format display systems, and facilities with long expected service lives.",
+          "The goal is not to specify the newest acronym. The goal is to give the client a reliable system with better choices, a sensible upgrade path, and fewer expensive surprises later.",
+        ],
+        pullQuote: "Become IPMX-aware now, specify it selectively, and prepare long-life infrastructure for what comes next.",
+      },
+    ],
+  },
+  {
     slug: "how-to-read-av-drawings",
     category: "Engineering Practice",
     label: "Drawings + coordination",

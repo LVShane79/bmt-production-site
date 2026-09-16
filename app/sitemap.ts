@@ -5,7 +5,7 @@ import { absoluteUrl } from "./lib/site";
 const staticPages = [
   { path: "/", lastModified: "2026-07-24", changeFrequency: "monthly" as const, priority: 1 },
   { path: "/contact", lastModified: "2026-07-21", changeFrequency: "monthly" as const, priority: 0.8 },
-  { path: "/insights", lastModified: "2026-07-21", changeFrequency: "weekly" as const, priority: 0.9 },
+  { path: "/insights", lastModified: "2026-09-16", changeFrequency: "weekly" as const, priority: 0.9 },
   { path: "/resources", lastModified: "2026-07-24", changeFrequency: "weekly" as const, priority: 0.9 },
   { path: "/resources/projection-lab", lastModified: "2026-07-30", changeFrequency: "monthly" as const, priority: 0.85 },
   { path: "/resources/project-questionnaire", lastModified: "2026-07-23", changeFrequency: "monthly" as const, priority: 0.8 },
