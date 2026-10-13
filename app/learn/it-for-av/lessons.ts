@@ -2,7 +2,7 @@ export type LessonSection = {
   heading: string;
   paragraphs: string[];
   bullets?: string[];
-  graphic?: "layers" | "physical" | "switch" | "subnet" | "services" | "time" | "vlan";
+  graphic?: "layers" | "physical" | "switch" | "subnet" | "services" | "time" | "vlan" | "route";
 };
 
 export type Lesson = {
@@ -473,6 +473,97 @@ export const lessons: Lesson[] = [
       { question: "Do VLANs automatically prevent routed communication?", answer: "No. Routers, ACLs, and firewall policies determine what may cross between VLANs." },
     ],
     next: "Next: inter-VLAN routing, gateways, ACLs, and firewalls—how boundaries become controlled communication paths.",
+  },
+  {
+    number: 8,
+    slug: "routing-acls-and-firewalls",
+    title: "Routing, ACLs, and Firewalls",
+    shortTitle: "Controlled paths between networks",
+    description: "Follow a packet across VLAN boundaries, separate routing from permission, and decide whether a router, firewall, or Layer 3 switch should own each gateway.",
+    readTime: "15 min",
+    publishedAt: "2026-10-12",
+    objectives: [
+      "Explain why communication between VLANs requires a Layer 3 device.",
+      "Follow a packet from an endpoint through its default gateway to another subnet.",
+      "Distinguish a route from an ACL or stateful firewall policy.",
+      "Decide when a Layer 3 switch should—and should not—own VLAN gateways.",
+      "Prevent duplicate gateways, bypass paths, and accidental inter-VLAN routing.",
+    ],
+    sections: [
+      {
+        heading: "Switch locally; route remotely",
+        paragraphs: [
+          "A Layer 2 switch forwards Ethernet frames inside one VLAN. A router forwards IP packets between different networks. When an endpoint applies its subnet mask and determines that a destination is local, it ARPs for the destination device. When the destination is remote, it ARPs for the default gateway instead.",
+          "Suppose a control processor at 172.16.20.50 needs an encoder at 172.16.40.60. The processor sends an IP packet addressed to the encoder inside an Ethernet frame addressed to the VLAN 20 gateway. The router removes that frame, consults its routing table, and creates a new Ethernet frame on VLAN 40. The IP source and destination normally remain the same; the Layer 2 addresses change at the routed hop.",
+          "A router may be a dedicated appliance, a firewall, a Layer 3 switch, or a virtual network function. On a Layer 3 switch, the gateway for a VLAN is commonly an SVI or VE—a logical IP interface attached to that VLAN.",
+        ],
+        graphic: "route",
+      },
+      {
+        heading: "A route is a path, not permission",
+        paragraphs: [
+          "A routing table answers where a packet should go. It does not necessarily answer whether the packet should be allowed to go there. If inter-VLAN routing is enabled without restrictions, the VLANs are organized but may not be meaningfully secured.",
+          "An ACL—Access Control List—matches characteristics such as source, destination, protocol, and TCP or UDP port, then permits or denies the packet. Rule order and direction matter, and many platforms finish with an implicit deny. Document the required conversation in plain language before translating it into a vendor's syntax.",
+          "A traditional ACL is often stateless: it evaluates packets independently. A stateful firewall remembers active sessions. If a management computer initiates HTTPS to an encoder, a stateful firewall can permit the encoder's replies without allowing the encoder to initiate arbitrary new connections toward the computer.",
+        ],
+        bullets: [
+          "Route: identifies the next path toward a destination network.",
+          "ACL: permits or denies traffic matching defined packet fields.",
+          "Stateful firewall: evaluates policy and remembers established conversations.",
+          "Least privilege: permit only the initiators, destinations, services, and directions the system requires.",
+        ],
+      },
+      {
+        heading: "The Layer 3 switch decision",
+        paragraphs: [
+          "A switch with Layer 3 capability can route enormous amounts of east-west traffic in hardware. That is useful in a large campus, production facility, or high-bandwidth media network when forcing every internal packet through a smaller firewall would create a bottleneck. It can also keep local services operating if the upstream security appliance is unavailable.",
+          "The tradeoff is policy visibility. A firewall usually provides stronger session awareness, logging, application controls, remote-access integration, NAT, and easier security administration. For smaller AV systems, letting the firewall or router own the VLAN gateways generally creates one obvious enforcement point. Use Layer 3 switching when its performance or resilience solves a documented problem—not merely because the command exists.",
+          "Ruckus FastIron router firmware is a good example: the image makes routing features available, but it does not require the ICX to become the system router. Keep only one management VE when the switch should remain Layer 2. Carry operational VLANs over tagged trunks and let the external router own their gateway addresses. Creating IP-addressed VEs in multiple VLANs gives the switch directly connected Layer 3 networks and can create an unintended path around the firewall.",
+        ],
+      },
+      {
+        heading: "Avoid gateway conflicts and bypass paths",
+        paragraphs: [
+          "Each VLAN needs deliberate gateway ownership. If both a firewall subinterface and a switch VE are configured with 172.16.20.1, they create a duplicate-IP conflict: ARP responses may alternate, connectivity becomes unstable, and the resulting symptoms can look random. Giving them different addresses—such as .1 and .2—avoids the duplicate but can still create two routing paths if some endpoints use one and some use the other.",
+          "That second condition is especially dangerous when the firewall is supposed to enforce policy. A device manually configured to use the Layer 3 switch as its gateway may bypass the firewall. Return traffic can also take a different path from outbound traffic, creating asymmetric routing that breaks stateful inspection.",
+          "Prevent this with a gateway-ownership schedule: identify one device and one gateway address for every VLAN. Do not configure VEs on access switches unless they serve a documented purpose. If several VEs are unavoidable, use ACLs or isolated VRFs and verify that they cannot become alternate gateways. Deliberate first-hop redundancy such as VRRP is different: multiple devices cooperate around one documented virtual gateway instead of accidentally competing.",
+        ],
+        bullets: [
+          "One documented gateway owner per VLAN unless a designed redundancy protocol is used.",
+          "One management VE is enough for an access switch that should not route user traffic.",
+          "Endpoint gateway settings must point to the intended router or firewall.",
+          "Check for duplicate IPs, alternate VEs, unexpected connected routes, and asymmetric paths during commissioning.",
+        ],
+      },
+      {
+        heading: "Document conversations, not vague access",
+        paragraphs: [
+          "Do not ask IT to open the AV VLAN. Create a communication matrix identifying the initiating device or subnet, destination, protocol, destination port, purpose, and whether broadcast or multicast discovery is also required. Direct control can route successfully while discovery fails because those are separate traffic flows.",
+          "A useful acceptance test proves both the permitted path and the denied path. Verify that the control processor can reach the encoder on the required service, that replies return correctly, and that a guest or expansion-port device cannot initiate connections into the AV networks.",
+        ],
+      },
+    ],
+    examples: [
+      { title: "Control across VLANs", text: "A processor in VLAN 20 initiates HTTPS or a vendor control session to an encoder in VLAN 40. The router provides the path; the firewall policy permits only the required initiator, destination, protocol, and service. Direct control may work even when local discovery does not cross the boundary." },
+      { title: "Ruckus ICX as Layer 2 transport", text: "An ICX running router firmware has one management VE in VLAN 99. VLANs 20, 30, and 40 exist only at Layer 2 on the switch and cross a tagged uplink. The firewall owns .1 in every operational subnet, so all inter-VLAN traffic reaches the intended policy point." },
+      { title: "When the core should route", text: "A large media facility may place gateway SVIs on a high-capacity Layer 3 core to keep heavy internal flows off a smaller firewall. ACLs constrain east-west access, while internet, remote-access, and higher-risk boundaries still traverse the firewall. The decision is based on measured bandwidth and security requirements." },
+    ],
+    glossary: [
+      { term: "Router", definition: "A device or function that forwards IP packets between networks." },
+      { term: "Routing table", definition: "The known destination networks and the next path toward each one." },
+      { term: "SVI / VE", definition: "A logical Layer 3 interface associated with a VLAN; vendors use different names." },
+      { term: "ACL", definition: "An ordered set of packet-matching permit and deny rules." },
+      { term: "Stateful firewall", definition: "A policy device that tracks active conversations and their return traffic." },
+      { term: "Asymmetric routing", definition: "A condition where the forward and return paths differ, potentially bypassing or confusing stateful devices." },
+      { term: "VRRP", definition: "A first-hop redundancy protocol that presents one virtual gateway through multiple coordinated routers." },
+    ],
+    exercise: { title: "Name the gateway owner", prompt: "Choose three VLANs from a real project. For each one, record its subnet, intended gateway address, physical device that owns the gateway, every other IP-addressed VE or SVI in that VLAN, and the policy controlling traffic to the other two VLANs. Any undocumented alternate gateway is a finding." },
+    review: [
+      { question: "Does a VE automatically mean the switch must be the network's router?", answer: "No. A single management VE lets the switch behave as an IP endpoint. Multiple IP-addressed VEs can make it a routing path, depending on the platform and configuration." },
+      { question: "What happens if a firewall and switch VE both use the same gateway IP?", answer: "They create a duplicate-IP conflict. Their ARP responses compete, producing unstable and unpredictable connectivity." },
+      { question: "Why can two different gateway addresses still be a security problem?", answer: "Endpoints may use the less-restricted gateway, bypassing the intended firewall and possibly creating asymmetric routing." },
+    ],
+    next: "Next: multicast, IGMP snooping, and the querier—how one source reaches many receivers without turning every switch port into a fire hose.",
   },
 ];
 

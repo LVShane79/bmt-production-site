@@ -1,4 +1,4 @@
-type GraphicKind = "layers" | "physical" | "switch" | "subnet" | "services" | "time" | "vlan";
+type GraphicKind = "layers" | "physical" | "switch" | "subnet" | "services" | "time" | "vlan" | "route";
 
 type Props = {
   kind: GraphicKind;
@@ -130,6 +130,24 @@ function Vlan() {
   </>;
 }
 
+function Route() {
+  return <>
+    <Node x={20} y={45} label="CONTROL" sub="VLAN 20 / .50" />
+    <Node x={408} y={45} label="ENCODER" sub="VLAN 40 / .60" />
+    <g transform="translate(193 124)">
+      <rect className="lesson-svg-switch" width="154" height="92" rx="3" />
+      <text className="lesson-svg-label" x="17" y="26">GATEWAY</text>
+      <text className="lesson-svg-sub" x="17" y="53">ROUTE → POLICY</text>
+      <text className="lesson-svg-sub" x="17" y="72">.20.1  /  .40.1</text>
+    </g>
+    <path className="lesson-svg-vlan vlan-20" d="M132 73l91 51" />
+    <path className="lesson-svg-vlan vlan-30" d="M317 124l91-51" />
+    <path className="lesson-svg-flow" d="M270 216v48" />
+    <path className="lesson-svg-arrow" d="M263 255l7 10 7-10" />
+    <text className="lesson-svg-note" x="154" y="292">PATH ≠ PERMISSION · ONE GATEWAY OWNER</text>
+  </>;
+}
+
 export function LessonGraphic({ kind, figure = "01", compact = false }: Props) {
   const content = {
     layers: <Layers />,
@@ -139,6 +157,7 @@ export function LessonGraphic({ kind, figure = "01", compact = false }: Props) {
     services: <Services />,
     time: <Time />,
     vlan: <Vlan />,
+    route: <Route />,
   }[kind];
 
   return (

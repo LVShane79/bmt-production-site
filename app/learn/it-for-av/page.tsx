@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   },
 };
 
-const graphicKinds = ["layers", "layers", "physical", "switch", "subnet", "services", "vlan"] as const;
+const graphicKinds = ["layers", "layers", "physical", "switch", "subnet", "services", "vlan", "route"] as const;
 
 export default function CoursePage() {
   return (
@@ -30,7 +30,7 @@ export default function CoursePage() {
           <p>A progressive networking and security course for commercial AV people who know the equipment—and want the missing IT details filled in properly.</p>
           <div className="course-stats">
             <span><strong>{lessons.length}</strong> lessons available</span>
-            <span><strong>8–13</strong> minutes each</span>
+            <span><strong>8–15</strong> minutes each</span>
             <span><strong>Free</strong> no sign-in</span>
           </div>
         </div>
@@ -68,10 +68,10 @@ export default function CoursePage() {
           <article className="lesson-card lesson-card-next">
             <div>
               <span>UP NEXT</span>
-              <strong>08</strong>
+              <strong>09</strong>
             </div>
-            <h3>Routing, ACLs, and Firewalls</h3>
-            <p>How traffic crosses VLAN boundaries—and how to allow exactly what the system needs without opening everything.</p>
+            <h3>Multicast, IGMP, and the Querier</h3>
+            <p>How one source reaches many receivers—and how switches learn exactly which ports need each stream.</p>
           </article>
         </div>
       </section>
