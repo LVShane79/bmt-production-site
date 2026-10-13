@@ -456,6 +456,7 @@ export const lessons: Lesson[] = [
     ],
     examples: [
       { title: "Dante plus control", text: "A DSP control interface can use an access port in VLAN 20 while its Dante interface uses an access port in VLAN 30. Both VLANs cross the switch uplink as tagged traffic." },
+      { title: "A tag-aware AV endpoint", text: "A Visionary Solutions Duet-5 encoder can act as a VLAN-aware endpoint instead of an ordinary access-port device. Its LAN1 connection can carry tagged video traffic, Dante/AES67 audio, and a separate network assigned to the LAN2 expansion port—up to three VLANs over one physical switch connection. With tagging disabled, video, audio, control, and anything plugged into LAN2 share the same flat VLAN. That can place Dante on the wrong network and let an unauthorized device plugged into the expansion port land directly on the video network. With tagging enabled, the encoder sorts each traffic type into its configured VLAN, but the connected switch port must be configured as a trunk with the same VLAN IDs permitted and tagged. This is a useful example of an endpoint that understands 802.1Q tags itself." },
       { title: "One SSID, several roles", text: "A wireless AP can assign users or private passphrases to different VLANs while transporting them over one trunk. Vendors call this PPSK, DPSK, MPSK, or similar names." },
     ],
     glossary: [
