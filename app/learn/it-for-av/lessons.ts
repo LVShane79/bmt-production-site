@@ -2,7 +2,7 @@ export type LessonSection = {
   heading: string;
   paragraphs: string[];
   bullets?: string[];
-  graphic?: "layers" | "physical" | "switch" | "subnet" | "services" | "time" | "vlan" | "route" | "multicast" | "qos";
+  graphic?: "layers" | "physical" | "switch" | "subnet" | "services" | "time" | "vlan" | "route" | "multicast" | "qos" | "wifi";
 };
 
 export type Lesson = {
@@ -736,6 +736,102 @@ export const lessons: Lesson[] = [
       { question: "Why can low average utilization still produce packet loss?", answer: "Short microbursts can exceed an outgoing interface's capacity and fill its buffers between monitoring samples." },
     ],
     next: "Next: Wi-Fi fundamentals—channels, airtime, roaming, and why a screen full of signal bars does not prove a healthy wireless network.",
+  },
+  {
+    number: 11,
+    slug: "wifi-channels-airtime-and-roaming",
+    title: "Wi-Fi Fundamentals: Channels, Airtime, and Roaming",
+    shortTitle: "The shared radio network",
+    description: "Understand channels, airtime, signal quality, adaptive data rates, and why a client with full bars can still cling to the wrong access point.",
+    readTime: "16 min",
+    publishedAt: "2026-10-14",
+    objectives: [
+      "Explain why Wi-Fi capacity is based on shared airtime rather than only Mbps.",
+      "Distinguish the practical characteristics of 2.4, 5, and 6 GHz.",
+      "Understand channel width, co-channel contention, and adjacent-channel interference.",
+      "Interpret RSSI, noise floor, SNR, negotiated rate, retries, and channel utilization.",
+      "Explain how client roaming works and how sticky-client problems are corrected.",
+    ],
+    sections: [
+      {
+        heading: "Wi-Fi is shared and half-duplex",
+        paragraphs: [
+          "A switched Ethernet endpoint normally has a dedicated full-duplex link. Wi-Fi is a shared radio system. Devices using the same channel listen before transmitting and contend for opportunities to speak. The access point, its clients, nearby APs on the same channel, their clients, and detectable neighboring networks all consume the same airtime.",
+          "A slow client can reduce performance for everyone because it occupies the channel longer to move the same payload. Airtime is also consumed by beacons, acknowledgments, probe traffic, management frames, retransmissions, and protocol overhead. The advertised link rate is therefore not the same as usable application throughput.",
+        ],
+        graphic: "wifi",
+      },
+      {
+        heading: "Choose the band intentionally",
+        paragraphs: [
+          "The 2.4 GHz band travels farther and penetrates common materials better, but it has limited capacity, heavy interference, and many legacy or IoT clients. In North America, channels 1, 6, and 11 are the usual non-overlapping 20 MHz choices. Forty-megahertz operation in 2.4 GHz generally consumes too much of the available spectrum.",
+          "Five gigahertz offers more channels and is the practical performance band for many commercial deployments. Some channels use DFS—Dynamic Frequency Selection—and must vacate when radar is detected. DFS can add useful capacity, but client support and the operational effect of a channel change must be considered.",
+          "Six gigahertz, used by Wi-Fi 6E and Wi-Fi 7 equipment, provides large amounts of cleaner spectrum but shorter effective coverage and weaker obstacle penetration. Only compatible clients can use it, and 6 GHz operation requires newer security such as WPA3 or Enhanced Open rather than WPA2-only service.",
+        ],
+      },
+      {
+        heading: "Wider channels are not free capacity",
+        paragraphs: [
+          "Common channel widths are 20, 40, 80, and 160 MHz, with additional options on newer platforms. A wider channel can give one client a higher peak rate, but it consumes more spectrum and leaves fewer independent channels for neighboring APs.",
+          "Dense offices, hotels, schools, and venues often gain more total capacity from several narrower channels than from a few enormous ones. Twenty megahertz is the sane default in 2.4 GHz; 20 or 40 MHz is common in dense 5 GHz designs; wider 6 GHz channels depend on client needs and AP density.",
+          "Nearby APs on the same channel normally hear one another and take turns, creating co-channel contention. Partially overlapping channels can corrupt frames without orderly coordination, producing adjacent-channel interference and retransmissions.",
+        ],
+      },
+      {
+        heading: "Signal bars do not measure network health",
+        paragraphs: [
+          "RSSI—Received Signal Strength Indicator—is commonly shown in dBm. Because the numbers are negative, -55 dBm is stronger than -70 dBm. Around -67 dBm is a common planning target for reliable roaming applications, but the required target depends on client capability, data rate, and application.",
+          "The noise floor represents background radio energy. SNR—Signal-to-Noise Ratio—compares the desired signal with that noise. A -60 dBm signal over a -90 dBm noise floor has 30 dB SNR. The same -60 dBm signal over -68 dBm noise has only 8 dB SNR and will likely perform badly despite displaying strong bars.",
+          "Clients adapt their modulation and coding scheme to conditions. Poor signal quality leads to lower negotiated rates, longer transmissions, and more retries. Commissioning should therefore review RSSI, SNR, channel utilization, negotiated rates, and retry percentages together.",
+        ],
+      },
+      {
+        heading: "The client normally decides when to roam",
+        paragraphs: [
+          "Multiple APs can advertise the same SSID, but the client normally chooses its AP and decides when to leave. The infrastructure can help with proper coverage overlap, transmit-power control, minimum data rates, and standards such as 802.11k neighbor reports, 802.11v transition suggestions, and 802.11r fast transition. The client still has the final vote in most deployments.",
+          "An AP can transmit more strongly than a phone, tablet, or small AV endpoint. The client hears the AP and shows several bars, but the AP may not reliably hear the client's weaker return signal. Coverage must be engineered as a two-way conversation around the weakest important client.",
+        ],
+      },
+      {
+        heading: "Correct sticky clients by shaping the RF cells",
+        paragraphs: [
+          "A sticky client remains associated with a distant AP even when a closer AP offers better service. Start by balancing transmit power so the old AP stops appearing attractive far outside its intended cell. Avoid running every radio at maximum power, and do not let 2.4 GHz coverage overwhelm the preferred 5 GHz cell.",
+          "Disable unnecessarily low legacy data rates so clients cannot maintain extremely slow connections from several rooms away. In a surveyed commercial environment, minimum basic rates such as 12 or 18 Mbps may be appropriate, but raising them without confirming overlap can create dead zones.",
+          "Enable 802.11k and 802.11v where supported, and test 802.11r with the actual client fleet because some older AV and IoT devices implement it poorly. Minimum-RSSI or forced-roam features can disconnect a client that refuses to move, but they should be the final nudge—not the foundation of the design.",
+          "Ruckus commonly exposes forced-roaming behavior through SmartRoam, though exact settings vary by controller and software release. A practical investigation compares the client's associated AP, band, AP-measured RSSI, negotiated rate, retry percentage, neighboring AP power, enabled roaming assistance, minimum data rates, and SSID/VLAN consistency before changing thresholds.",
+        ],
+        bullets: [
+          "Shape overlapping cells with sensible AP placement and transmit power.",
+          "Remove legacy low rates only after verifying coverage.",
+          "Use 802.11k/v to inform and encourage capable clients.",
+          "Use 802.11r only after compatibility testing.",
+          "Apply minimum-RSSI or SmartRoam thresholds cautiously.",
+          "Keep SSID, security, and VLAN assignment consistent across roaming APs.",
+        ],
+      },
+    ],
+    examples: [
+      { title: "Wireless presentation", text: "The presentation receiver may be wired while the laptop path is wireless. Poor SNR, retries, channel congestion, or roaming can cause video stutter even when the presentation appliance and wired AV network are healthy." },
+      { title: "Sticky Q-SYS control tablet", text: "A tablet remains attached to a hallway AP at -76 dBm while standing under the room AP. Inspect the AP association, AP-measured RSSI, retries, channel use, transmit power, 802.11k/v support, minimum rates, and SmartRoam policy before adding another access point." },
+      { title: "Fixed wireless camera", text: "A camera may advertise a high peak PHY rate while competing for airtime and retransmitting during interference. For fixed, high-duty-cycle AV endpoints, wired Ethernet remains preferable when practical." },
+    ],
+    glossary: [
+      { term: "AP", definition: "Access point; the infrastructure radio connecting wireless clients to the network." },
+      { term: "SSID / BSSID", definition: "The network name and the MAC identity of a specific AP radio serving it." },
+      { term: "RSSI", definition: "Received Signal Strength Indicator, commonly reported in dBm." },
+      { term: "SNR", definition: "Signal-to-Noise Ratio; desired signal strength compared with the noise floor." },
+      { term: "MCS", definition: "The modulation and coding method selected for a wireless transmission." },
+      { term: "DFS", definition: "Dynamic Frequency Selection used on certain 5 GHz channels shared with radar." },
+      { term: "Airtime", definition: "The shared time available for devices to transmit on a channel." },
+      { term: "Sticky client", definition: "A client that remains associated with a poor AP instead of roaming to a better one." },
+    ],
+    exercise: { title: "Diagnose the bars", prompt: "Inspect one conference room with a controller or survey tool. Record the associated AP and BSSID, band, channel, width, client RSSI, noise floor or SNR, negotiated rates, retries, channel utilization, and other APs heard on the same channel. Decide whether the limiting factor is coverage, noise, contention, client capability, roaming, or the wired uplink." },
+    review: [
+      { question: "Why can a slow Wi-Fi client affect faster clients?", answer: "All devices share airtime. A slow client occupies the channel longer and may require more retransmissions." },
+      { question: "Why can strong RSSI coexist with poor performance?", answer: "RSSI measures signal strength, not noise, airtime congestion, interference, retries, or available throughput." },
+      { question: "Does the access point decide when a client roams?", answer: "Usually not. The client normally decides, while the network supplies information, assistance, and sometimes a carefully configured disconnect threshold." },
+    ],
+    next: "Next: Wi-Fi security and identity—WPA2/WPA3, 802.1X, RADIUS, and assigning different VLANs from one SSID with PPSK, DPSK, or MPSK.",
   },
 ];
 

@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   },
 };
 
-const graphicKinds = ["layers", "layers", "physical", "switch", "subnet", "services", "vlan", "route", "multicast", "qos"] as const;
+const graphicKinds = ["layers", "layers", "physical", "switch", "subnet", "services", "vlan", "route", "multicast", "qos", "wifi"] as const;
 
 export default function CoursePage() {
   return (
@@ -68,10 +68,10 @@ export default function CoursePage() {
           <article className="lesson-card lesson-card-next">
             <div>
               <span>UP NEXT</span>
-              <strong>11</strong>
+              <strong>12</strong>
             </div>
-            <h3>Wi-Fi Fundamentals</h3>
-            <p>Channels, airtime, roaming, and why a screen full of signal bars does not prove a healthy wireless network.</p>
+            <h3>Wi-Fi Security and Identity</h3>
+            <p>WPA2/WPA3, 802.1X, RADIUS, and assigning different VLANs from one SSID with private passphrases.</p>
           </article>
         </div>
       </section>
@@ -80,7 +80,7 @@ export default function CoursePage() {
         <p className="eyebrow"><span /> Where we are headed</p>
         <div>
           <h2>From packets to production.</h2>
-          <p>Future lessons continue through Wi-Fi, identity, monitoring, certificates, secure remote access, Dante, AES67, NDI, IPMX, ST 2110, and complete AV network commissioning.</p>
+          <p>Future lessons continue through wireless security, identity, monitoring, certificates, secure remote access, Dante, AES67, NDI, IPMX, ST 2110, and complete AV network commissioning.</p>
         </div>
       </section>
       <SiteFooter />

@@ -1,4 +1,4 @@
-type GraphicKind = "layers" | "physical" | "switch" | "subnet" | "services" | "time" | "vlan" | "route" | "multicast" | "qos";
+type GraphicKind = "layers" | "physical" | "switch" | "subnet" | "services" | "time" | "vlan" | "route" | "multicast" | "qos" | "wifi";
 
 type Props = {
   kind: GraphicKind;
@@ -193,6 +193,30 @@ function Qos() {
   </>;
 }
 
+function Wifi() {
+  return <>
+    <g transform="translate(48 111)">
+      <circle className="lesson-svg-clock" cx="70" cy="70" r="58" />
+      <circle className="lesson-svg-led" cx="70" cy="70" r="7" />
+      <path className="lesson-svg-flow" d="M70 70l44-34M70 70l-48 18M70 70l38 42" />
+      <text className="lesson-svg-label" x="42" y="151">AP 01</text>
+      <text className="lesson-svg-sub" x="25" y="168">CH 36 · 5 GHz</text>
+    </g>
+    <g transform="translate(357 111)">
+      <circle className="lesson-svg-clock alt" cx="70" cy="70" r="58" />
+      <circle className="lesson-svg-led" cx="70" cy="70" r="7" />
+      <path className="lesson-svg-flow" d="M70 70l-39-35M70 70l49 15M70 70l-34 44" />
+      <text className="lesson-svg-label" x="42" y="151">AP 02</text>
+      <text className="lesson-svg-sub" x="25" y="168">CH 44 · 5 GHz</text>
+    </g>
+    <Node x={214} y={33} label="TABLET" sub="CLIENT DECIDES" />
+    <path className="lesson-svg-vlan vlan-20" d="M247 88l-93 61" />
+    <path className="lesson-svg-flow" d="M290 88l101 61" />
+    <text className="lesson-svg-note" x="168" y="284">RSSI + SNR + AIRTIME + RETRIES</text>
+    <text className="lesson-svg-note" x="183" y="305">SHAPE CELLS · ASSIST ROAMING</text>
+  </>;
+}
+
 export function LessonGraphic({ kind, figure = "01", compact = false }: Props) {
   const content = {
     layers: <Layers />,
@@ -205,6 +229,7 @@ export function LessonGraphic({ kind, figure = "01", compact = false }: Props) {
     route: <Route />,
     multicast: <Multicast />,
     qos: <Qos />,
+    wifi: <Wifi />,
   }[kind];
 
   return (
