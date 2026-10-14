@@ -1,4 +1,4 @@
-type GraphicKind = "layers" | "physical" | "switch" | "subnet" | "services" | "time" | "vlan" | "route";
+type GraphicKind = "layers" | "physical" | "switch" | "subnet" | "services" | "time" | "vlan" | "route" | "multicast" | "qos";
 
 type Props = {
   kind: GraphicKind;
@@ -148,6 +148,51 @@ function Route() {
   </>;
 }
 
+function Multicast() {
+  return <>
+    <Node x={22} y={129} label="ENCODER" sub="239.10.10.50" />
+    <g transform="translate(194 114)">
+      <rect className="lesson-svg-switch" width="150" height="86" rx="3" />
+      <text className="lesson-svg-label" x="16" y="25">IGMP SWITCH</text>
+      <text className="lesson-svg-sub" x="16" y="52">SNOOP TABLE</text>
+      <text className="lesson-svg-sub" x="16" y="69">QUERIER ACTIVE</text>
+    </g>
+    <Node x={405} y={35} label="RX A" sub="JOINED" />
+    <Node x={405} y={130} label="RX B" sub="JOINED" />
+    <Node x={405} y={237} label="RX C" sub="NOT JOINED" />
+    <path className="lesson-svg-vlan vlan-20" d="M134 157h60M344 143l61-70M344 157h61" />
+    <path className="lesson-svg-flow" d="M344 171l61 94" />
+    <text className="lesson-svg-note" x="167" y="292">ONE STREAM · INTERESTED PORTS ONLY</text>
+  </>;
+}
+
+function Qos() {
+  return <>
+    <Node x={22} y={44} label="PTP" sub="DSCP 56" />
+    <Node x={22} y={142} label="AUDIO" sub="DSCP 46" />
+    <Node x={22} y={240} label="DATA" sub="BEST EFFORT" />
+    <g transform="translate(195 103)">
+      <rect className="lesson-svg-switch" width="150" height="118" rx="3" />
+      <text className="lesson-svg-label" x="16" y="25">QoS POLICY</text>
+      <text className="lesson-svg-sub" x="16" y="52">CLASSIFY</text>
+      <text className="lesson-svg-sub" x="16" y="70">MAP → QUEUE</text>
+      <text className="lesson-svg-sub" x="16" y="88">SCHEDULE</text>
+    </g>
+    <g transform="translate(402 72)">
+      <rect className="lesson-svg-poe" width="105" height="48" rx="2" />
+      <rect className="lesson-svg-poe" y="65" width="105" height="48" rx="2" />
+      <rect className="lesson-svg-poe" y="130" width="105" height="48" rx="2" />
+      <text className="lesson-svg-label" x="17" y="29">QUEUE 1</text>
+      <text className="lesson-svg-label" x="17" y="94">QUEUE 2</text>
+      <text className="lesson-svg-label" x="17" y="159">QUEUE 3</text>
+    </g>
+    <path className="lesson-svg-vlan vlan-20" d="M134 72l61 58M345 129l57-33" />
+    <path className="lesson-svg-vlan vlan-30" d="M134 170h61M345 163h57" />
+    <path className="lesson-svg-flow" d="M134 268l61-66M345 197l57 29" />
+    <text className="lesson-svg-note" x="163" y="315">PRIORITY MANAGES CONTENTION · NOT CAPACITY</text>
+  </>;
+}
+
 export function LessonGraphic({ kind, figure = "01", compact = false }: Props) {
   const content = {
     layers: <Layers />,
@@ -158,6 +203,8 @@ export function LessonGraphic({ kind, figure = "01", compact = false }: Props) {
     time: <Time />,
     vlan: <Vlan />,
     route: <Route />,
+    multicast: <Multicast />,
+    qos: <Qos />,
   }[kind];
 
   return (

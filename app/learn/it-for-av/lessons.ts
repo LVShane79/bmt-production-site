@@ -2,7 +2,7 @@ export type LessonSection = {
   heading: string;
   paragraphs: string[];
   bullets?: string[];
-  graphic?: "layers" | "physical" | "switch" | "subnet" | "services" | "time" | "vlan" | "route";
+  graphic?: "layers" | "physical" | "switch" | "subnet" | "services" | "time" | "vlan" | "route" | "multicast" | "qos";
 };
 
 export type Lesson = {
@@ -564,6 +564,178 @@ export const lessons: Lesson[] = [
       { question: "Why can two different gateway addresses still be a security problem?", answer: "Endpoints may use the less-restricted gateway, bypassing the intended firewall and possibly creating asymmetric routing." },
     ],
     next: "Next: multicast, IGMP snooping, and the querier—how one source reaches many receivers without turning every switch port into a fire hose.",
+  },
+  {
+    number: 9,
+    slug: "multicast-igmp-and-the-querier",
+    title: "Multicast, IGMP, and the Querier",
+    shortTitle: "One stream, selected receivers",
+    description: "See how one source reaches many receivers, how switches learn which ports need each stream, and why snooping without a querier eventually gets weird.",
+    readTime: "15 min",
+    publishedAt: "2026-10-13",
+    objectives: [
+      "Distinguish unicast, broadcast, and multicast delivery.",
+      "Explain the separate jobs performed by IGMP, IGMP snooping, and the querier.",
+      "Follow one multicast stream from an encoder to selected receiver ports.",
+      "Explain why snooping tables require an active querier.",
+      "Identify practical multicast checks for AV commissioning.",
+    ],
+    sections: [
+      {
+        heading: "One sender, several interested receivers",
+        paragraphs: [
+          "With unicast, a source sends a separate copy to each receiver. A 700 Mbps encoder feeding ten decoders could therefore require 7 Gbps from the encoder. With multicast, the encoder sends one stream to a multicast group address and the network duplicates it only where paths branch toward interested receivers.",
+          "A multicast address such as 239.10.10.50 identifies a group, not a physical device. The source does not need a list of every decoder. Receivers join the group when they want the stream and leave when they no longer need it.",
+        ],
+        graphic: "multicast",
+      },
+      {
+        heading: "IGMP manages receiver membership",
+        paragraphs: [
+          "IGMP—Internet Group Management Protocol—does not carry the audio or video. It carries membership information. A decoder sends a membership report that effectively says it wants traffic for a particular multicast group.",
+          "IGMPv2 supports ordinary group joins and leaves and remains common in commercial AV. IGMPv3 adds source filtering, which allows Source-Specific Multicast: a receiver can request group G specifically from source S. Seeing IGMPv3 in a switch configuration does not prove that every endpoint or AV platform is using SSM.",
+        ],
+      },
+      {
+        heading: "Snooping controls Layer 2 forwarding",
+        paragraphs: [
+          "A Layer 2 switch cannot learn multicast destinations through the ordinary unicast MAC-learning process. Without multicast awareness, it may flood a stream throughout the VLAN, including toward control processors, touchpanels, printers, or wireless access points that never requested it.",
+          "IGMP snooping lets the switch observe membership reports and build a table of multicast groups and interested ports. The switch then forwards each stream only toward its receivers and any required inter-switch or router ports.",
+        ],
+        bullets: [
+          "IGMP: receivers report which groups they want.",
+          "IGMP snooping: switches learn which Layer 2 ports lead to those receivers.",
+          "Multicast routing: a separate function that carries multicast between IP networks.",
+        ],
+      },
+      {
+        heading: "The querier keeps membership state alive",
+        paragraphs: [
+          "A receiver can disappear without sending a leave message. The IGMP querier periodically asks which memberships are still required. Active receivers respond, switches refresh their snooping tables, and stale entries eventually age out.",
+          "Snooping without an active querier may appear to work initially. Later, memberships can expire and behavior becomes platform-dependent: streams may stop, flood, or change unpredictably. That is why 'IGMP snooping enabled' is not a complete commissioning result.",
+          "The querier does not have to be the default gateway. A Layer 3-capable switch can often provide the querier function while an external firewall remains the VLAN gateway. Multiple querier-capable devices may participate in an election, but BMT should document the intended active device, its address, and any deliberate backup.",
+        ],
+      },
+      {
+        heading: "Membership belongs to a VLAN",
+        paragraphs: [
+          "IGMP snooping decisions are maintained per VLAN. A receiver in one VLAN cannot join a source in another through Layer 2 snooping alone. Crossing that boundary requires multicast routing, a proxy, or an application-specific gateway.",
+          "For many smaller AV systems, the cleanest design keeps high-bandwidth multicast sources and receivers together while routing management and control normally. Discovery must be documented separately because control, discovery, clocking, and media may use different traffic flows.",
+        ],
+      },
+    ],
+    examples: [
+      { title: "AV-over-IP channel selection", text: "A decoder selects an encoder and sends an IGMP report for that encoder's group. The access switch adds the decoder port, while the core forwards the stream only toward access switches containing interested receivers." },
+      { title: "Dante multicast audio", text: "A deliberately created Dante multicast flow feeds several amplifiers. IGMP snooping limits the audio to the required ports, while clocking and discovery may still use their own multicast traffic." },
+      { title: "The mystery flood", text: "A network has snooping enabled but no querier. Initial joins work, then tables age out and large streams reach unrelated ports. A 100 Mbps controller begins dropping packets even though the controller itself is healthy." },
+    ],
+    glossary: [
+      { term: "Multicast", definition: "One transmitted stream delivered to a group of interested receivers." },
+      { term: "IGMP", definition: "The IPv4 protocol receivers use to report multicast-group membership." },
+      { term: "IGMP snooping", definition: "Layer 2 switch behavior that learns group membership by observing IGMP messages." },
+      { term: "Querier", definition: "The device that periodically asks receivers to renew their memberships." },
+      { term: "SSM", definition: "Source-Specific Multicast; membership identifies both the source and group." },
+      { term: "Flooding", definition: "Forwarding traffic toward many or all ports in a VLAN." },
+    ],
+    exercise: { title: "Follow one stream", prompt: "Choose one multicast encoder and subscribed decoder. Record the source IP, group address, decoder switch port, snooping-table entry, active querier address, and what changes when the decoder selects another source. Confirm that an unsubscribed port is not receiving the media stream." },
+    review: [
+      { question: "Does IGMP snooping create multicast memberships?", answer: "No. Receivers request membership with IGMP; snooping lets switches observe those requests and build port-level forwarding state." },
+      { question: "Why is the querier needed after receivers join?", answer: "Devices can disappear without sending leaves. Queries renew active memberships and allow stale entries to age out." },
+      { question: "Must the IGMP querier be the VLAN's default gateway?", answer: "No. A switch may provide the querier function while a separate router or firewall remains the gateway." },
+    ],
+    next: "Next: QoS, latency, jitter, and packet loss—why spare average bandwidth does not guarantee clean real-time media.",
+  },
+  {
+    number: 10,
+    slug: "qos-latency-jitter-and-packet-loss",
+    title: "QoS, Latency, Jitter, and Packet Loss",
+    shortTitle: "Protecting real-time traffic",
+    description: "Learn why available bandwidth does not guarantee clean media, how packets are prioritized, and what QoS can—and absolutely cannot—fix.",
+    readTime: "15 min",
+    publishedAt: "2026-10-14",
+    objectives: [
+      "Distinguish bandwidth, latency, jitter, and packet loss.",
+      "Explain why low average utilization does not rule out congestion.",
+      "Understand classification, DSCP, 802.1p/PCP, queues, and trust boundaries.",
+      "Explain why packet markings matter only when the network honors them.",
+      "Establish useful QoS documentation and commissioning checks.",
+    ],
+    sections: [
+      {
+        heading: "Bandwidth is capacity, not performance",
+        paragraphs: [
+          "A 1 Gbps link describes capacity. It does not reveal short bursts, time spent in switch buffers, dropped packets, or whether a critical packet is waiting behind a large transfer.",
+          "Several encoders can transmit at nearly the same moment and briefly exceed an outgoing interface's line rate. Packets collect in its buffer and are discarded if the buffer fills. A five-minute utilization graph may still look comfortable. This short-duration congestion is called a microburst.",
+          "Oversubscription occurs when the possible incoming load exceeds an outgoing link. Document endpoint speeds, stream rates, simultaneous flows, traffic paths, uplink capacity, and headroom—not just the switch port count.",
+        ],
+        graphic: "qos",
+      },
+      {
+        heading: "Latency is the total travel time",
+        paragraphs: [
+          "Latency includes processing, propagation, serialization, and queuing delay. A device must inspect a packet; the interface must place every bit on the wire; the signal must travel; and the packet may have to wait behind other traffic.",
+          "A 1,500-byte packet contains roughly 12,000 bits before additional Ethernet overhead. Serialization alone takes about 120 microseconds at 100 Mbps, 12 microseconds at 1 Gbps, and 1.2 microseconds at 10 Gbps. Within a building, variable queuing and device processing often matter more than propagation distance.",
+        ],
+      },
+      {
+        heading: "Jitter is inconsistent delay",
+        paragraphs: [
+          "Jitter is variation in packet arrival time. Real-time receivers use a buffer to release unevenly arriving packets at a steady rate. A larger buffer tolerates more variation but adds latency; a smaller buffer reduces latency but gives the network less room for error.",
+          "That is why a lower Dante latency setting is not automatically better. The correct setting is one the complete path can meet consistently, including every switch hop and congested interface.",
+        ],
+      },
+      {
+        heading: "Packet loss misses the deadline",
+        paragraphs: [
+          "Packets may be lost because of congested queues, bad links, failing optics, wireless interference, endpoint overload, multicast errors, or loops. TCP can request missing data again, but real-time UDP media often cannot wait for retransmission.",
+          "The receiver may conceal the loss, repeat old information, mute, freeze, show artifacts, or drop the frame. Increasing error, discard, queue-drop, or late-packet counters is evidence; 'it feels networky' remains more of a spiritual diagnosis.",
+        ],
+      },
+      {
+        heading: "QoS is a complete handling chain",
+        paragraphs: [
+          "QoS classifies traffic, marks it, decides where markings are trusted, maps each class into a hardware queue, and schedules those queues during contention. If the interface is idle, priority and ordinary packets both leave immediately.",
+          "DSCP is a six-bit Layer 3 marking in the IP header. Dante commonly uses DSCP 56 for time-critical PTP event traffic and 46 for real-time audio, but every platform's current guidance must be verified. PCP is the three-bit priority field in an 802.1Q tag and exists only while that Ethernet frame is tagged.",
+          "A marking is only a label. Every switch in the path must trust or intentionally rewrite it, map it to the intended queue, and schedule that queue correctly. Strict priority is useful for small amounts of critical traffic, but misplacing a large stream there can starve everything below it.",
+        ],
+        bullets: [
+          "Classify the traffic.",
+          "Mark it with DSCP or PCP where appropriate.",
+          "Define the trust boundary.",
+          "Map markings into hardware queues.",
+          "Schedule and monitor the queues under load.",
+        ],
+      },
+      {
+        heading: "QoS cannot repeal math",
+        paragraphs: [
+          "If two sustained 700 Mbps streams must cross a 1 Gbps uplink, QoS cannot fit 1.4 Gbps through the pipe. It may protect clock and control packets, but some video must queue or drop.",
+          "The real correction may be a faster uplink, lower stream rates, fewer simultaneous flows, different source placement, or an appropriate link-aggregation design. QoS decides who goes first during contention; it does not manufacture capacity.",
+        ],
+      },
+    ],
+    examples: [
+      { title: "Dante clock and audio", text: "PTP uses little bandwidth but is highly delay-sensitive. Audio uses more bandwidth but has a configured latency allowance. Confirm the endpoint markings, queue mappings, trunk behavior, and late-packet counters across the entire path." },
+      { title: "AV-over-IP uplink", text: "A remote access switch has a 1 Gbps uplink while two 700 Mbps video streams need to cross it. Priority can protect control and clocking, but the sustained oversubscription still requires an architectural fix." },
+      { title: "Q-SYS mixed traffic", text: "A Q-SYS deployment can include PTP, real-time audio, control, camera video, management, and corporate data. Marking the entire AV VLAN as highest priority defeats classification; apply the platform's current traffic-class guidance consistently." },
+    ],
+    glossary: [
+      { term: "Bandwidth", definition: "The maximum data-carrying capacity of a link." },
+      { term: "Latency", definition: "Time required for data to travel from source to destination." },
+      { term: "Jitter", definition: "Variation in packet-arrival delay." },
+      { term: "Packet loss", definition: "Packets that fail to reach the receiver in usable time." },
+      { term: "DSCP", definition: "A Layer 3 traffic-class marking in an IP packet." },
+      { term: "PCP", definition: "The three-bit priority marking inside an 802.1Q tag." },
+      { term: "Trust boundary", definition: "The point where the network accepts or rewrites endpoint markings." },
+      { term: "Microburst", definition: "A brief traffic burst capable of filling an interface buffer despite low average utilization." },
+    ],
+    exercise: { title: "Follow the priority", prompt: "Choose one real-time AV endpoint. Record its required DSCP values, whether the access switch trusts them, their hardware-queue mappings, whether uplinks preserve them, and the interface or queue-drop counters during normal operation." },
+    review: [
+      { question: "Can QoS solve a sustained 1.4 Gbps load on a 1 Gbps uplink?", answer: "No. It can protect important traffic, but the sustained load must be reduced or the link upgraded." },
+      { question: "What is the difference between DSCP and a switch queue?", answer: "DSCP is a label in the packet. The switch must map that label to a queue and give the queue appropriate service." },
+      { question: "Why can low average utilization still produce packet loss?", answer: "Short microbursts can exceed an outgoing interface's capacity and fill its buffers between monitoring samples." },
+    ],
+    next: "Next: Wi-Fi fundamentals—channels, airtime, roaming, and why a screen full of signal bars does not prove a healthy wireless network.",
   },
 ];
 
