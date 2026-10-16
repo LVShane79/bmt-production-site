@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-const graphicKinds = ["layers", "layers", "physical", "switch", "subnet", "services", "vlan", "route", "multicast", "qos", "wifi"] as const;
+const graphicKinds = ["layers", "layers", "physical", "switch", "subnet", "services", "vlan", "route", "multicast", "qos", "wifi", "security", "identity"] as const;
 
 export default async function LessonPage({ params }: PageProps) {
   const { slug } = await params;
@@ -137,7 +137,7 @@ export default async function LessonPage({ params }: PageProps) {
 
       <nav className="lesson-pagination" aria-label="Lesson navigation">
         {previous ? <Link href={`/learn/it-for-av/${previous.slug}`}><span>← Previous lesson</span><strong>{previous.title}</strong></Link> : <Link href="/learn/it-for-av"><span>← Course</span><strong>IT for AV index</strong></Link>}
-          {next ? <Link href={`/learn/it-for-av/${next.slug}`}><span>Next lesson →</span><strong>{next.title}</strong></Link> : <div><span>Next lesson</span><strong>Wi-Fi Security and Identity</strong><i>Coming next</i></div>}
+          {next ? <Link href={`/learn/it-for-av/${next.slug}`}><span>Next lesson →</span><strong>{next.title}</strong></Link> : <div><span>Next lesson</span><strong>SNMP and Syslog for AV</strong><i>Coming next</i></div>}
       </nav>
       <SiteFooter />
     </main>

@@ -2,7 +2,7 @@ export type LessonSection = {
   heading: string;
   paragraphs: string[];
   bullets?: string[];
-  graphic?: "layers" | "physical" | "switch" | "subnet" | "services" | "time" | "vlan" | "route" | "multicast" | "qos" | "wifi";
+  graphic?: "layers" | "physical" | "switch" | "subnet" | "services" | "time" | "vlan" | "route" | "multicast" | "qos" | "wifi" | "security" | "identity";
 };
 
 export type Lesson = {
@@ -832,6 +832,150 @@ export const lessons: Lesson[] = [
       { question: "Does the access point decide when a client roams?", answer: "Usually not. The client normally decides, while the network supplies information, assistance, and sometimes a carefully configured disconnect threshold." },
     ],
     next: "Next: Wi-Fi security and identity—WPA2/WPA3, 802.1X, RADIUS, and assigning different VLANs from one SSID with PPSK, DPSK, or MPSK.",
+  },
+  {
+    number: 12,
+    slug: "wifi-security-identity-and-private-keys",
+    title: "Wi-Fi Security and Identity",
+    shortTitle: "One SSID, different access",
+    description: "Separate authentication, encryption, and authorization; then see how 802.1X, RADIUS, and private passphrases place wireless clients into the right AV policy.",
+    readTime: "14 min",
+    publishedAt: "2026-10-15",
+    objectives: [
+      "Separate authentication, encryption, and authorization.",
+      "Explain WPA-Personal, WPA-Enterprise, 802.1X, and RADIUS at an AV-engineering level.",
+      "Describe how PPSK, DPSK, or MPSK credentials can assign different policies from one SSID.",
+      "Trace a wireless AV client from successful login through VLAN assignment, DHCP, and access policy.",
+    ],
+    sections: [
+      {
+        heading: "Three jobs hide behind Wi-Fi security",
+        paragraphs: [
+          "Authentication proves that a device or user may connect. Encryption protects traffic across the radio link. Authorization decides what the authenticated client may reach afterward. These jobs are related but not interchangeable.",
+          "A guest can authenticate successfully and still be prohibited from reaching a Q-SYS Core. That is not a contradiction; it is authorization doing its job. Wi-Fi encryption also protects only the wireless hop, so application protections such as HTTPS still matter.",
+        ],
+        graphic: "security",
+      },
+      {
+        heading: "Personal and Enterprise solve identity differently",
+        paragraphs: [
+          "WPA2-Personal and WPA3-Personal use a passphrase-based model. WPA3-Personal uses SAE for stronger resistance to captured-password guessing and requires protected management frames. A WPA2/WPA3 transition network supports older clients, but those clients still connect with their older protection.",
+          "WPA2-Enterprise and WPA3-Enterprise use 802.1X so an individual device or user can present credentials. The client is the supplicant, the AP or controller is the authenticator controlling admission, and an authentication server—usually reached through RADIUS—evaluates the identity and returns a decision.",
+          "RADIUS carries authentication and policy exchanges; it does not transport the tablet's ongoing control or video traffic. EAP-TLS can use certificates instead of reusable user passwords, but certificate enrollment, renewal, and revocation must have a clear owner.",
+        ],
+      },
+      {
+        heading: "One SSID can lead to different VLANs",
+        paragraphs: [
+          "PPSK, DPSK, and MPSK are vendor names for families of private or multiple pre-shared-key features. One SSID accepts several passphrases, and each recognized credential can map a device or group to a VLAN, role, expiration rule, or access policy. Ruckus commonly calls this DPSK; other vendors use names such as PPSK, MPSK, or iPSK.",
+          "A room tablet, technician, and temporary device can therefore join the same visible SSID while receiving different access. The client normally does not tag its own wireless traffic; the wireless infrastructure applies the resulting policy. Exact capabilities, WPA2/WPA3 support, device binding, and roaming behavior vary by platform and software release.",
+        ],
+        bullets: [
+          "Room tablet credential → AV-control VLAN or role.",
+          "Technician credential → restricted service policy.",
+          "Guest credential → internet-only policy.",
+          "Revoke one key without changing every device in the building.",
+        ],
+      },
+      {
+        heading: "The assigned VLAN still needs a complete path",
+        paragraphs: [
+          "Password-to-VLAN mapping does not create the rest of the network. In a locally bridged design, the AP uplink and every required switch link must carry the assigned VLAN. The VLAN also needs DHCP, an appropriate gateway, and firewall or ACL rules. In a tunneled design, client traffic may travel to a wireless controller or gateway before entering its policy domain.",
+          "When a client connects but cannot control the room, identify the last successful step: association, authentication, VLAN assignment, DHCP, routing, firewall policy, discovery, or the AV application. A self-assigned 169.254 address after successful authentication points toward DHCP or VLAN transport—not another password reset.",
+        ],
+      },
+    ],
+    examples: [
+      { title: "Q-SYS control tablet", text: "Assign the room tablet an individual credential mapped to an AV-control policy. Permit the required Core and support traffic without granting unrestricted access to every switch and device-management interface." },
+      { title: "Wireless presentation guest", text: "A guest laptop can have internet access yet fail to discover a wired presentation receiver because of client isolation, cross-VLAN discovery, or firewall policy. Document and permit the required flows instead of opening the entire AV network." },
+    ],
+    glossary: [
+      { term: "PSK", definition: "Pre-shared key used for passphrase-based Wi-Fi access." },
+      { term: "SAE", definition: "Simultaneous Authentication of Equals, used by WPA3-Personal." },
+      { term: "802.1X", definition: "Framework that controls admission to wired or wireless networks." },
+      { term: "RADIUS", definition: "Protocol commonly used between network infrastructure and an authentication service." },
+      { term: "PPSK / DPSK / MPSK", definition: "Vendor-specific families of private or multiple passphrase features that can apply per-device or per-group policy." },
+      { term: "EAP-TLS", definition: "Certificate-based authentication method used within 802.1X deployments." },
+    ],
+    exercise: { title: "Follow the successful login", prompt: "A tablet connects with its private key and the controller assigns VLAN 20, but it receives 169.254.x.x. Verify VLAN 20 across the AP's actual forwarding path, then check DHCP scope, relay, gateway, and policy. Record which step first fails." },
+    review: [
+      { question: "Does sharing one SSID guarantee that clients share one VLAN?", answer: "No. Identity or credential policy can assign different VLANs or roles from the same SSID." },
+      { question: "Does RADIUS carry the client's normal AV traffic?", answer: "No. It carries authentication, authorization, and potentially accounting exchanges." },
+      { question: "Why can authentication succeed while room control still fails?", answer: "A later dependency can fail: VLAN transport, DHCP, routing, firewall policy, discovery, or the application." },
+    ],
+    next: "Next: the AV engineer's identity primer—LDAP, Active Directory, Entra ID, Kerberos, and the few integration details we actually need to own.",
+  },
+  {
+    number: 13,
+    slug: "identity-for-av-ldap-ad-entra-and-kerberos",
+    title: "Identity for AV: LDAP, AD, Entra, and Kerberos",
+    shortTitle: "Know the integration boundary",
+    description: "Understand enough enterprise identity to specify and troubleshoot AV logins, group-based roles, and cloud access—without becoming the client's domain administrator.",
+    readTime: "10 min",
+    publishedAt: "2026-10-15",
+    objectives: [
+      "Distinguish a directory, LDAP, Active Directory Domain Services, and Microsoft Entra ID.",
+      "Recognize where Kerberos, DNS, time, certificates, and group membership affect an AV integration.",
+      "Translate directory groups into useful AV application roles.",
+      "Define the information BMT needs while leaving directory administration with the client's IT owner.",
+    ],
+    sections: [
+      {
+        heading: "The four names perform different jobs",
+        paragraphs: [
+          "A directory stores structured objects such as users, groups, computers, and service accounts. LDAP is a standard protocol applications can use to search and read a directory. Active Directory Domain Services—AD DS—is Microsoft's traditional on-premises directory and domain platform; LDAP is only one of the services it provides.",
+          "Microsoft Entra ID is a cloud identity provider used by Microsoft 365, Azure, and web applications. It commonly uses modern sign-in protocols such as OpenID Connect, OAuth 2.0, and SAML. Entra ID is not simply an AD domain controller hosted in the cloud, and it does not natively provide ordinary LDAP access.",
+        ],
+        graphic: "identity",
+      },
+      {
+        heading: "What an AV platform usually needs",
+        paragraphs: [
+          "An on-premises AV management server offering LDAP integration may use a limited service account to find users and read group membership from AD DS. The application then maps approved directory groups to local roles such as administrator, support technician, or operator.",
+          "A cloud or browser application may instead redirect the user to Entra ID and receive a signed token after authentication. BMT Network Manager Web follows this modern model through Microsoft sign-in and Graph permissions; it is not an LDAP client.",
+          "Authentication proves identity. Authorization decides what that identity may do. If a user can sign in but receives access denied, the likely failure is group lookup, role mapping, consent, or application policy—not the user's password.",
+        ],
+        bullets: [
+          "Define the supported identity source and sign-in method.",
+          "Map named client-owned groups to AV roles.",
+          "Use least-privilege service accounts where required.",
+          "Keep credentials out of drawings and closeout PDFs.",
+        ],
+      },
+      {
+        heading: "Kerberos matters mainly through its dependencies",
+        paragraphs: [
+          "Kerberos is the ticket-based authentication system widely used inside AD domains. A client first receives a ticket-granting ticket, then obtains service-specific tickets without sending its password to every server. An AV engineer rarely configures the Kerberos infrastructure, but should recognize its dependencies.",
+          "Kerberos depends heavily on correct DNS, service naming, and synchronized time. A domain-integrated AV server can therefore reject valid users when DNS points somewhere unhelpful, the clock is wrong, or a service name does not match. Capture the evidence and bring the client's identity administrator into the right part of the problem.",
+        ],
+      },
+      {
+        heading: "BMT's ownership line",
+        paragraphs: [
+          "BMT should define what the AV application requires, verify network reachability, configure supported integration fields, map approved groups to roles, and test acceptance and rejection. The client's IT team should own domain controllers, directory structure, identity lifecycle, certificate authorities, and organization-wide security policy unless those services are explicitly within BMT's scope.",
+          "Record server names, identity method, encrypted connection requirement, approved groups, role mappings, service-account owner, certificate owner, and renewal expectations. Do not record passwords. This is enough to engineer a dependable integration without adopting someone else's forest and all the squirrels living in it.",
+        ],
+      },
+    ],
+    examples: [
+      { title: "LDAP-backed AV monitoring", text: "The platform finds the user but denies access. Network reachability, the bind account, and the directory search already worked; inspect group membership, nested-group support, and the group-to-role mapping next." },
+      { title: "BMT Network Manager Web", text: "Microsoft sign-in succeeds but project files remain unavailable. Investigate Entra application configuration, token scope, Graph permission, consent, and the user's file access—not LDAP settings or an on-premises domain controller." },
+    ],
+    glossary: [
+      { term: "Directory", definition: "Structured store of users, groups, devices, services, and related attributes." },
+      { term: "LDAP", definition: "Protocol used by applications to access directory information." },
+      { term: "AD DS", definition: "Microsoft's traditional domain and directory service." },
+      { term: "Entra ID", definition: "Microsoft's cloud identity and access-management service." },
+      { term: "Kerberos", definition: "Ticket-based authentication protocol used extensively in AD domains." },
+      { term: "IdP", definition: "Identity provider that authenticates identities for applications." },
+    ],
+    exercise: { title: "Find the actual failed step", prompt: "An AV server's LDAP connection test succeeds and it can find the user's name, but login returns not authorized. List what this proves, then inspect the expected group, membership lookup, nested-group behavior, and application role mapping before touching the user's password." },
+    review: [
+      { question: "Is LDAP the same thing as Active Directory?", answer: "No. LDAP is a protocol; AD DS is a directory and domain platform that supports LDAP among several other services." },
+      { question: "Is Entra ID simply an AD domain controller in Microsoft's cloud?", answer: "No. It is a cloud identity provider built around modern application authentication, not a native LDAP and traditional domain replacement." },
+      { question: "What identity information should BMT own in the AV documentation?", answer: "The required method, server or provider, encrypted connection, approved groups, role mappings, service-account owner, certificate owner, and renewal expectations—never the actual passwords." },
+    ],
+    next: "Next: SNMP and syslog in real AV systems—what to monitor, what the numbers mean, and how to preserve evidence before someone power-cycles the crime scene.",
   },
 ];
 
