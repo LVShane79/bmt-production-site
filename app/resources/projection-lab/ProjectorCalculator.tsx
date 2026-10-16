@@ -82,6 +82,32 @@ function extractProjectorFromText(text: string, filename: string): Projector | n
   };
 }
 
+function projectionGeometryStatus(distanceFit: boolean, shiftFit: boolean) {
+  const pass = distanceFit && shiftFit;
+  const label = pass ? "Geometry passes"
+    : !distanceFit && !shiftFit ? "Review throw + lens shift"
+    : !distanceFit ? "Review throw distance" : "Review lens shift";
+  return { pass, label };
+}
+
+function encodeProjectionDesign(design: Record<string, unknown>) {
+  const bytes = new TextEncoder().encode(JSON.stringify(design));
+  let binary = "";
+  bytes.forEach(byte => { binary += String.fromCharCode(byte); });
+  return btoa(binary);
+}
+
+function decodeProjectionDesign(value: string) {
+  const binary = atob(value);
+  const bytes = Uint8Array.from(binary, character => character.charCodeAt(0));
+  try {
+    return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+  } catch {
+    // Older links used btoa directly and may contain Latin-1 characters.
+    return JSON.parse(binary);
+  }
+}
+
 export default function ProjectorCalculator() {
   const [projector, setProjector] = useState(starterProjectors[0]);
   const [library, setLibrary] = useState(starterProjectors);
@@ -120,16 +146,20 @@ export default function ProjectorCalculator() {
     const encoded = new URL(location.href).searchParams.get("design");
     if (!encoded) return;
     try {
-      const saved = JSON.parse(atob(encoded));
+      const saved = decodeProjectionDesign(encoded);
       // Shared designs are intentionally restored after mount because the URL is browser-only state.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       if (saved.aspect in ratios) setAspect(saved.aspect);
-      [["screenInput", setScreenInput], ["gain", setGain], ["lightLoss", setLightLoss], ["screenBottom", setScreenBottom], ["horizontalOffset", setHorizontalOffset]].forEach(([key, setter]) => {
+      [["screenInput", setScreenInput], ["gain", setGain], ["lightLoss", setLightLoss], ["screenBottom", setScreenBottom], ["horizontalOffset", setHorizontalOffset], ["manualLensHeight", setManualLensHeight], ["mountDistance", setMountDistance], ["knownDistance", setKnownDistance], ["selectedThrow", setSelectedThrow], ["chassisDepth", setChassisDepth], ["lensInset", setLensInset], ["serviceClearance", setServiceClearance], ["measuredLumens", setMeasuredLumens]].forEach(([key, setter]) => {
         const value = saved[key as string];
         if (typeof value === "number" && Number.isFinite(value)) (setter as (number: number) => void)(value);
       });
-      if (typeof saved.screenInput === "number" && !screenPresets[saved.aspect || "16:9"]?.includes(saved.screenInput)) setCustomSize(true);
-      if (["bottom", "center", "top"].includes(saved.projectionAlignment)) setProjectionAlignment(saved.projectionAlignment);
+      if (typeof saved.customSize === "boolean") setCustomSize(saved.customSize);
+      else if (typeof saved.screenInput === "number" && !screenPresets[saved.aspect || "16:9"]?.includes(saved.screenInput)) setCustomSize(true);
+      if (["bottom", "center", "top", "manual"].includes(saved.projectionAlignment)) setProjectionAlignment(saved.projectionAlignment);
+      if (["screen", "distance", "fit"].includes(saved.calculationMode)) setCalculationMode(saved.calculationMode);
+      if (["rated", "calibrated", "measured"].includes(saved.brightnessMode)) setBrightnessMode(saved.brightnessMode);
+      if (["fL", "nits"].includes(saved.brightnessUnit)) setBrightnessUnit(saved.brightnessUnit);
       if (saved.ambient in presets) setAmbient(saved.ambient);
       if (saved.projector?.brand && saved.projector?.model) activateProjector(saved.projector, false);
     } catch {
@@ -203,7 +233,7 @@ export default function ProjectorCalculator() {
 
   async function share() {
     const url = new URL(location.href);
-    url.searchParams.set("design", btoa(JSON.stringify({ aspect, screenInput, projectionAlignment, gain, ambient, lightLoss, screenBottom, horizontalOffset, projector })));
+    url.searchParams.set("design", encodeProjectionDesign({ v: 2, aspect, screenInput, customSize, projectionAlignment, gain, ambient, lightLoss, screenBottom, horizontalOffset, projector, calculationMode, mountDistance, knownDistance, selectedThrow, manualLensHeight, chassisDepth, lensInset, serviceClearance, brightnessMode, measuredLumens, brightnessUnit }));
     await navigator.clipboard.writeText(url.toString());
     setShareLabel("Link copied");
     setTimeout(() => setShareLabel("Share design"), 1800);
@@ -215,6 +245,7 @@ export default function ProjectorCalculator() {
       : [...current.slice(-3), next]);
   }
 
+  const geometryStatus = projectionGeometryStatus(calc.distanceFit, calc.shiftFit);
   const brightnessFit = calc.deliveredLumens >= calc.requiredLumens;
   const brightnessPosition = Math.min(100, Math.max(0, calc.footLamberts / 100 * 100));
   const brightnessClass = calc.footLamberts < 22 ? "Dark room" : calc.footLamberts < 40 ? "Controlled presentation" : calc.footLamberts < 70 ? "Classroom / meeting room" : "Bright ambient light";
@@ -279,7 +310,7 @@ export default function ProjectorCalculator() {
       </aside>
 
       <section className="card visual">
-        <div className="card-head"><span>02</span><div><p>Verify the geometry</p><h2>Throw + optical axis</h2></div><div className={`status-pill ${calc.shiftFit ? "pass" : "review"}`}>{calc.shiftFit ? "Geometry passes" : "Review lens shift"}</div></div>
+        <div className="card-head"><span>02</span><div><p>Verify the geometry</p><h2>Throw + optical axis</h2></div><div className={`status-pill ${geometryStatus.pass ? "pass" : "review"}`}>{geometryStatus.label}</div></div>
         <div className="projection-stage">
           <div className="ceiling-line" />
           <div className="projector-rig" style={{ left: `${projectorLeft}%`, top: `${projectorTop}%` }}><div className="projector-body"><i /></div><span>LENS CL · {projectionAlignment.toUpperCase()}</span></div>
