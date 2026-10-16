@@ -47,7 +47,7 @@ const workflowResources = [
 
 export default function ResourcesPage() {
   const resources = [
-    { name: "BMT Speaker Lab", url: "https://bmt-speaker-lab.lvshane79.chatgpt.site" },
+    { name: "BMT Speaker Lab", url: absoluteUrl("/resources/speaker-lab") },
     { name: "BMT Projection Lab", url: absoluteUrl("/resources/projection-lab") },
     { name: "AV Project Questionnaire", url: absoluteUrl("/resources/project-questionnaire") },
     { name: "AV Site Survey Checklist", url: absoluteUrl("/resources/site-survey") },
@@ -124,11 +124,11 @@ export default function ResourcesPage() {
           </ul>
           <TrackedLink
             className="button button-dark"
-            href="https://bmt-speaker-lab.lvshane79.chatgpt.site"
+            href="/resources/speaker-lab"
             target="_blank"
             rel="noreferrer"
             eventName="resource_open"
-            eventProperties={{ resource: "speaker_lab", destination: "external" }}
+            eventProperties={{ resource: "speaker_lab", destination: "internal" }}
           >
             Open Speaker Lab <ArrowIcon />
           </TrackedLink>

@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Generated third-party PDF.js worker; lint the preparation script instead.
+    "public/labs/pdfjs/**",
   ]),
 ]);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 
 type Projector = {
@@ -52,8 +52,8 @@ function filenameIdentity(filename: string) {
 async function readSpecificationText(file: File) {
   if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) return file.text();
   const pdfjs = await import("pdfjs-dist");
-  const worker = await import("pdfjs-dist/build/pdf.worker.min.mjs?url");
-  pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
+  // Served from the same deployment and copied from the installed PDF.js version.
+  pdfjs.GlobalWorkerOptions.workerSrc = "/labs/pdfjs/pdf.worker.min.mjs";
   const pdf = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
   const pages: string[] = [];
   for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
@@ -63,6 +63,16 @@ async function readSpecificationText(file: File) {
   return pages.join("\n");
 }
 
+function parseVerticalLensShift(text: string): { up: number; down: number } | null {
+  // Only explicit signed pairs or ± ranges establish both travel limits.
+  const range = text.match(/(?:vertical\s+lens\s+shift|lens\s+shift\s+vertical)[^\d±+\-−]{0,45}([+\-−])\s*(\d{1,3}(?:\.\d+)?)\s*%?\s*(?:\/|,|to)\s*([+\-−])\s*(\d{1,3}(?:\.\d+)?)\s*%/i);
+  if (range && (range[1] === "+") !== (range[3] === "+")) {
+    return range[1] === "+" ? { up: Number(range[2]), down: Number(range[4]) } : { up: Number(range[4]), down: Number(range[2]) };
+  }
+  const symmetric = text.match(/(?:vertical\s+lens\s+shift|lens\s+shift\s+vertical)[^\d±+\-−]{0,45}(?:±|\+\s*\/\s*[-−])\s*(\d{1,3}(?:\.\d+)?)\s*%/i);
+  return symmetric ? { up: Number(symmetric[1]), down: Number(symmetric[1]) } : null;
+}
+
 function extractProjectorFromText(text: string, filename: string): Projector | null {
   const flat = text.replace(/\u00a0/g, " ").replace(/\s+/g, " ");
   const identity = filenameIdentity(filename);
@@ -70,16 +80,43 @@ function extractProjectorFromText(text: string, filename: string): Projector | n
     || flat.match(/(\d(?:\.\d+)?)\s*(?:[-–—~to]+\s*)(\d(?:\.\d+)?)\s*:\s*1/i);
   const lumens = Number(flat.match(/(\d{1,3}(?:,\d{3})+|\d{4,6})\s*(?:ANSI|ISO|center)?\s*lumens?/i)?.[1]?.replaceAll(",", "") || 0);
   const resolution = flat.match(/\b(4K UHD|4K|WUXGA|WXGA|Full HD|1080p|XGA)\b/i)?.[1] || "Not published";
-  const shiftV = Number(flat.match(/(?:vertical\s+lens\s+shift|lens\s+shift\s+vertical)[^\d]{0,45}(?:±|\+\/-)?\s*(\d{1,3}(?:\.\d+)?)\s*%/i)?.[1] || 0);
-  const shiftH = Number(flat.match(/(?:horizontal\s+lens\s+shift|lens\s+shift\s+horizontal)[^\d]{0,45}(?:±|\+\/-)?\s*(\d{1,3}(?:\.\d+)?)\s*%/i)?.[1] || 0);
+  const verticalShift = parseVerticalLensShift(flat);
+  const horizontalShift = flat.match(/(?:horizontal\s+lens\s+shift|lens\s+shift\s+horizontal)[^\d]{0,45}(?:±|\+\/-)?\s*(\d{1,3}(?:\.\d+)?)\s*%/i);
+  const shiftH = Number(horizontalShift?.[1] || 0);
   if (!throwMatch || !lumens) return null;
   return {
     ...identity, lumens, resolution,
     throwMin: Number(throwMatch[1]), throwMax: Number(throwMatch[2]),
     lens: flat.match(/\b(?:lens\s+model|projection\s+lens)[^\w]{0,12}([A-Z]{2,6}[-\s]?[A-Z0-9]{3,12})\b/i)?.[1] || "From uploaded specification",
-    shiftVUp: shiftV, shiftVDown: shiftV, shiftH,
-    note: `Extracted locally from ${filename}. ${shiftV || shiftH ? "Review the parsed values" : "Lens-shift values were not found and are set to zero"} before final design.`,
+    shiftVUp: verticalShift?.up ?? 0, shiftVDown: verticalShift?.down ?? 0, shiftH,
+    note: `Extracted locally from ${filename}. ${verticalShift ? "" : "Vertical lens-shift range is missing or unsupported and is set to zero; manual review required. "}${horizontalShift ? "" : "Horizontal lens shift was not found and is set to zero; manual review required. "}Review the parsed values before final design.`, 
   };
+}
+
+function projectionGeometryStatus(distanceFit: boolean, shiftFit: boolean) {
+  const pass = distanceFit && shiftFit;
+  const label = pass ? "Geometry passes"
+    : !distanceFit && !shiftFit ? "Review throw + lens shift"
+    : !distanceFit ? "Review throw distance" : "Review lens shift";
+  return { pass, label };
+}
+
+function encodeProjectionDesign(design: Record<string, unknown>) {
+  const bytes = new TextEncoder().encode(JSON.stringify(design));
+  let binary = "";
+  bytes.forEach(byte => { binary += String.fromCharCode(byte); });
+  return btoa(binary);
+}
+
+function decodeProjectionDesign(value: string) {
+  const binary = atob(value);
+  const bytes = Uint8Array.from(binary, character => character.charCodeAt(0));
+  try {
+    return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+  } catch {
+    // Older links used btoa directly and may contain Latin-1 characters.
+    return JSON.parse(binary);
+  }
 }
 
 export default function ProjectorCalculator() {
@@ -113,6 +150,10 @@ export default function ProjectorCalculator() {
   const [searching, setSearching] = useState(false);
   const [message, setMessage] = useState("");
   const [results, setResults] = useState<Projector[]>([]);
+  const searchInFlight = useRef(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLElement>(null);
   const [manual, setManual] = useState<Projector>({ brand: "Custom", model: "Projector + lens", lumens: 8000, resolution: "WUXGA", throwMin: 1.2, throwMax: 2.0, lens: "Manual entry", shiftVUp: 50, shiftVDown: 50, shiftH: 20, note: "Manually entered values — verify against current manufacturer documentation." });
   const [shareLabel, setShareLabel] = useState("Share design");
 
@@ -120,16 +161,20 @@ export default function ProjectorCalculator() {
     const encoded = new URL(location.href).searchParams.get("design");
     if (!encoded) return;
     try {
-      const saved = JSON.parse(atob(encoded));
+      const saved = decodeProjectionDesign(encoded);
       // Shared designs are intentionally restored after mount because the URL is browser-only state.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       if (saved.aspect in ratios) setAspect(saved.aspect);
-      [["screenInput", setScreenInput], ["gain", setGain], ["lightLoss", setLightLoss], ["screenBottom", setScreenBottom], ["horizontalOffset", setHorizontalOffset]].forEach(([key, setter]) => {
+      [["screenInput", setScreenInput], ["gain", setGain], ["lightLoss", setLightLoss], ["screenBottom", setScreenBottom], ["horizontalOffset", setHorizontalOffset], ["manualLensHeight", setManualLensHeight], ["mountDistance", setMountDistance], ["knownDistance", setKnownDistance], ["selectedThrow", setSelectedThrow], ["chassisDepth", setChassisDepth], ["lensInset", setLensInset], ["serviceClearance", setServiceClearance], ["measuredLumens", setMeasuredLumens]].forEach(([key, setter]) => {
         const value = saved[key as string];
         if (typeof value === "number" && Number.isFinite(value)) (setter as (number: number) => void)(value);
       });
-      if (typeof saved.screenInput === "number" && !screenPresets[saved.aspect || "16:9"]?.includes(saved.screenInput)) setCustomSize(true);
-      if (["bottom", "center", "top"].includes(saved.projectionAlignment)) setProjectionAlignment(saved.projectionAlignment);
+      if (typeof saved.customSize === "boolean") setCustomSize(saved.customSize);
+      else if (typeof saved.screenInput === "number" && !screenPresets[saved.aspect || "16:9"]?.includes(saved.screenInput)) setCustomSize(true);
+      if (["bottom", "center", "top", "manual"].includes(saved.projectionAlignment)) setProjectionAlignment(saved.projectionAlignment);
+      if (["screen", "distance", "fit"].includes(saved.calculationMode)) setCalculationMode(saved.calculationMode);
+      if (["rated", "calibrated", "measured"].includes(saved.brightnessMode)) setBrightnessMode(saved.brightnessMode);
+      if (["fL", "nits"].includes(saved.brightnessUnit)) setBrightnessUnit(saved.brightnessUnit);
       if (saved.ambient in presets) setAmbient(saved.ambient);
       if (saved.projector?.brand && saved.projector?.model) activateProjector(saved.projector, false);
     } catch {
@@ -172,15 +217,29 @@ export default function ProjectorCalculator() {
   }, [aspect, screenInput, projector, lightLoss, gain, ambient, screenBottom, projectionAlignment, manualLensHeight, horizontalOffset, calculationMode, mountDistance, knownDistance, selectedThrow, chassisDepth, lensInset, serviceClearance, brightnessMode, measuredLumens]);
 
   async function search() {
-    if (!query.trim()) return;
+    if (searchInFlight.current) return;
+    if (!query.trim()) { setMessage("Enter a manufacturer, projector, lens, or requirement."); return; }
+    searchInFlight.current = true;
     setSearching(true); setMessage(""); setResults([]);
     try {
       const response = await fetch("/api/projectors", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ query, constraints }) });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error);
-      setResults(data.projectors || (data.projector ? [data.projector] : []));
-    } catch (error) { setMessage(error instanceof Error ? error.message : "The lookup failed."); }
-    finally { setSearching(false); }
+      const data = (await response.json().catch(() => { throw new Error("The search service returned an unreadable response. Please try again."); })) || {};
+      if (!response.ok) throw new Error(data.error || "The lookup failed. Please try again.");
+      const nextResults = Array.isArray(data.projectors) ? data.projectors : data.projector ? [data.projector] : [];
+      if (!nextResults.length) throw new Error("No equipment options were returned. Try a specific model, or use a specification sheet or manual entry.");
+      setResults(nextResults);
+    } catch (error) { setMessage(error instanceof Error ? error.message : "The lookup failed. Please try again."); }
+    finally { searchInFlight.current = false; setSearching(false); }
+  }
+
+  function showSearchResults() {
+    const panel = dialogRef.current;
+    const list = resultsRef.current;
+    if (!panel || !list) return;
+    // Dismiss a phone keyboard, then scroll the dialog rather than the page behind it.
+    searchInputRef.current?.blur();
+    list.focus({ preventScroll: true });
+    panel.scrollTo({ top: Math.max(0, list.getBoundingClientRect().top - panel.getBoundingClientRect().top + panel.scrollTop - 16), behavior: "smooth" });
   }
 
   async function importSpecification(file?: File) {
@@ -203,7 +262,7 @@ export default function ProjectorCalculator() {
 
   async function share() {
     const url = new URL(location.href);
-    url.searchParams.set("design", btoa(JSON.stringify({ aspect, screenInput, projectionAlignment, gain, ambient, lightLoss, screenBottom, horizontalOffset, projector })));
+    url.searchParams.set("design", encodeProjectionDesign({ v: 2, aspect, screenInput, customSize, projectionAlignment, gain, ambient, lightLoss, screenBottom, horizontalOffset, projector, calculationMode, mountDistance, knownDistance, selectedThrow, manualLensHeight, chassisDepth, lensInset, serviceClearance, brightnessMode, measuredLumens, brightnessUnit }));
     await navigator.clipboard.writeText(url.toString());
     setShareLabel("Link copied");
     setTimeout(() => setShareLabel("Share design"), 1800);
@@ -215,6 +274,7 @@ export default function ProjectorCalculator() {
       : [...current.slice(-3), next]);
   }
 
+  const geometryStatus = projectionGeometryStatus(calc.distanceFit, calc.shiftFit);
   const brightnessFit = calc.deliveredLumens >= calc.requiredLumens;
   const brightnessPosition = Math.min(100, Math.max(0, calc.footLamberts / 100 * 100));
   const brightnessClass = calc.footLamberts < 22 ? "Dark room" : calc.footLamberts < 40 ? "Controlled presentation" : calc.footLamberts < 70 ? "Classroom / meeting room" : "Bright ambient light";
@@ -279,7 +339,7 @@ export default function ProjectorCalculator() {
       </aside>
 
       <section className="card visual">
-        <div className="card-head"><span>02</span><div><p>Verify the geometry</p><h2>Throw + optical axis</h2></div><div className={`status-pill ${calc.shiftFit ? "pass" : "review"}`}>{calc.shiftFit ? "Geometry passes" : "Review lens shift"}</div></div>
+        <div className="card-head"><span>02</span><div><p>Verify the geometry</p><h2>Throw + optical axis</h2></div><div className={`status-pill ${geometryStatus.pass ? "pass" : "review"}`}>{geometryStatus.label}</div></div>
         <div className="projection-stage">
           <div className="ceiling-line" />
           <div className="projector-rig" style={{ left: `${projectorLeft}%`, top: `${projectorTop}%` }}><div className="projector-body"><i /></div><span>LENS CL · {projectionAlignment.toUpperCase()}</span></div>
@@ -346,12 +406,16 @@ export default function ProjectorCalculator() {
     </section>
     <footer><strong>BMT PROJECTION LAB</strong><p>For preliminary design and coordination only. Confirm final geometry, lens compatibility, brightness, orientation, and shift limits with current manufacturer documentation.</p></footer>
 
-    {dialog && <div className="dialog-backdrop" onMouseDown={(event) => event.target === event.currentTarget && setDialog(false)}><section className="dialog" role="dialog" aria-modal="true" aria-labelledby="find-title">
+    {dialog && <div className="dialog-backdrop" onMouseDown={(event) => event.target === event.currentTarget && setDialog(false)}><section ref={dialogRef} className="dialog" role="dialog" aria-modal="true" aria-labelledby="find-title">
       <button className="close" onClick={() => setDialog(false)} aria-label="Close">×</button>
       <div className="dialog-title"><p className="eyebrow dark">Projector + lens specifications</p><h2 id="find-title">Choose equipment data</h2><p>Research a model, drop in a specification sheet, or enter known parameters manually.</p></div>
       <div className="tabs"><button className={dialogTab === "ai" ? "active" : ""} onClick={() => { setDialogTab("ai"); setMessage(""); setResults([]); }}>AI research</button><button className={dialogTab === "upload" ? "active" : ""} onClick={() => { setDialogTab("upload"); setMessage(""); setResults([]); }}>Spec sheet</button><button className={dialogTab === "manual" ? "active" : ""} onClick={() => { setDialogTab("manual"); setMessage(""); setResults([]); }}>Manual entry</button></div>
       <div className="dialog-body">
-        {dialogTab === "ai" && <><label className="search-box"><span>Manufacturer, projector, lens, or requirement</span><div><input value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => event.key === "Enter" && search()} placeholder="e.g. Epson, an 8K-lumen classroom projector, or EB-PU2010 at 1.3:1" /><button onClick={search} disabled={searching}>{searching ? "Researching…" : "Search with AI"}</button></div></label><div className="constraint-grid"><label><span>Screen diagonal</span><input value={constraints.screen} onChange={(event) => setConstraints({ ...constraints, screen: event.target.value })} placeholder="180 in" /></label><label><span>Minimum throw</span><input value={constraints.minDistance} onChange={(event) => setConstraints({ ...constraints, minDistance: event.target.value })} placeholder="18 ft" /></label><label><span>Maximum throw</span><input value={constraints.maxDistance} onChange={(event) => setConstraints({ ...constraints, maxDistance: event.target.value })} placeholder="30 ft" /></label><label><span>Resolution</span><input value={constraints.resolution} onChange={(event) => setConstraints({ ...constraints, resolution: event.target.value })} /></label><label><span>Mounting</span><select value={constraints.mounting} onChange={(event) => setConstraints({ ...constraints, mounting: event.target.value })}><option>Ceiling</option><option>Floor / table</option><option>Rear projection</option><option>Portrait</option></select></label><label><span>Required connections</span><input value={constraints.connections} onChange={(event) => setConstraints({ ...constraints, connections: event.target.value })} placeholder="HDBaseT, SDI…" /></label></div><p className="hint">The search uses these room constraints to return engineering-fit combinations and flag conflicts. Confirm the final choice in current manufacturer documentation—because the useful number may still be hiding on page 73.</p></>}
+        {dialogTab === "ai" && <><label className="search-box"><span>Manufacturer, projector, lens, or requirement</span><div><input ref={searchInputRef} value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => event.key === "Enter" && search()} placeholder="e.g. Epson, an 8K-lumen classroom projector, or EB-PU2010 at 1.3:1" /><button onClick={search} disabled={searching}>{searching ? "Researching…" : "Search with AI"}</button></div></label>
+          <div className="search-feedback" role="status" aria-live="polite" aria-atomic="true">
+            {searching ? <p>Researching manufacturer sources. This can take about a minute.</p> : message ? <p className="message">{message}</p> : results.length > 0 ? <><p><strong>{results.length} researched option{results.length === 1 ? "" : "s"} found.</strong></p><button className="secondary" onClick={showSearchResults}>View results ↓</button></> : null}
+          </div>
+          <div className="constraint-grid"><label><span>Screen diagonal</span><input value={constraints.screen} onChange={(event) => setConstraints({ ...constraints, screen: event.target.value })} placeholder="180 in" /></label><label><span>Minimum throw</span><input value={constraints.minDistance} onChange={(event) => setConstraints({ ...constraints, minDistance: event.target.value })} placeholder="18 ft" /></label><label><span>Maximum throw</span><input value={constraints.maxDistance} onChange={(event) => setConstraints({ ...constraints, maxDistance: event.target.value })} placeholder="30 ft" /></label><label><span>Resolution</span><input value={constraints.resolution} onChange={(event) => setConstraints({ ...constraints, resolution: event.target.value })} /></label><label><span>Mounting</span><select value={constraints.mounting} onChange={(event) => setConstraints({ ...constraints, mounting: event.target.value })}><option>Ceiling</option><option>Floor / table</option><option>Rear projection</option><option>Portrait</option></select></label><label><span>Required connections</span><input value={constraints.connections} onChange={(event) => setConstraints({ ...constraints, connections: event.target.value })} placeholder="HDBaseT, SDI…" /></label></div><p className="hint">The search uses these room constraints to return engineering-fit combinations and flag conflicts. Confirm the final choice in current manufacturer documentation—because the useful number may still be hiding on page 73.</p></>}
         {dialogTab === "upload" && <label className="upload"><input type="file" accept=".pdf,.txt,application/pdf,text/plain" onChange={(event) => importSpecification(event.target.files?.[0])} /><span className="upload-mark">↓</span><h3>{searching ? "Reading specification…" : "Drop in a projector or lens spec sheet"}</h3><p>PDF or text · processed locally in this browser</p><span className="upload-button">Choose specification</span></label>}
         {dialogTab === "manual" && <div className="manual-grid">
           <label><span>Manufacturer</span><input value={manual.brand} onChange={(event) => setManual({ ...manual, brand: event.target.value })} /></label>
@@ -366,8 +430,8 @@ export default function ProjectorCalculator() {
           <label><span>Horizontal shift · ±%</span><input type="number" min="0" value={manual.shiftH} onChange={(event) => setManual({ ...manual, shiftH: Number(event.target.value) })} /></label>
           <button className="primary wide" onClick={() => activateProjector(manual)} disabled={!manual.brand || !manual.model || manual.throwMin <= 0 || manual.throwMax < manual.throwMin || manual.lumens <= 0}>Use manual parameters <span>→</span></button>
         </div>}
-        {message && <div className="message">{message}</div>}
-        {results.length > 0 && <div className="search-results"><span className="selection-label">{dialogTab === "upload" ? "Extracted specification" : `${results.length} researched option${results.length === 1 ? "" : "s"}`}</span>{results.map((result) => <article className="search-result" key={`${result.brand}-${result.model}-${result.lens}`}><h3>{result.brand} <b>{result.model}</b></h3><div className="result-specs"><span>Output<b>{result.lumens.toLocaleString()} lm</b></span><span>Throw range<b>{result.throwMin}–{result.throwMax}:1</b></span><span>Lens<b>{result.lens || "Integrated"}</b></span><span>Shift<b>+{result.shiftVUp}/−{result.shiftVDown}% V · ±{result.shiftH}% H</b></span></div><p>{result.note}</p>{result.source && <a href={result.source} target="_blank" rel="noreferrer">Open manufacturer source ↗</a>}<div className="result-actions"><button className="primary" onClick={() => activateProjector(result)}>Use this combination <span>→</span></button><button className="secondary" onClick={() => toggleShortlist(result)}>{shortlist.some((item) => item.brand === result.brand && item.model === result.model && item.lens === result.lens) ? "Remove from compare" : "Add to compare"}</button></div></article>)}</div>}
+        {dialogTab !== "ai" && message && <div className="message" role="alert">{message}</div>}
+        {results.length > 0 && <div ref={resultsRef} tabIndex={-1} aria-label="Equipment search results" className="search-results"><span className="selection-label">{dialogTab === "upload" ? "Extracted specification" : `${results.length} researched option${results.length === 1 ? "" : "s"}`}</span>{results.map((result) => <article className="search-result" key={`${result.brand}-${result.model}-${result.lens}`}><h3>{result.brand} <b>{result.model}</b></h3><div className="result-specs"><span>Output<b>{result.lumens.toLocaleString()} lm</b></span><span>Throw range<b>{result.throwMin}–{result.throwMax}:1</b></span><span>Lens<b>{result.lens || "Integrated"}</b></span><span>Shift<b>+{result.shiftVUp}/−{result.shiftVDown}% V · ±{result.shiftH}% H</b></span></div><p>{result.note}</p>{result.source && <a href={result.source} target="_blank" rel="noreferrer">Open manufacturer source ↗</a>}<div className="result-actions"><button className="primary" onClick={() => activateProjector(result)}>Use this combination <span>→</span></button><button className="secondary" onClick={() => toggleShortlist(result)}>{shortlist.some((item) => item.brand === result.brand && item.model === result.model && item.lens === result.lens) ? "Remove from compare" : "Add to compare"}</button></div></article>)}</div>}
         <div className="library"><span className="selection-label">Reference library</span>{library.map((item) => <button key={`${item.brand}-${item.model}`} className={item.model === projector.model ? "selected" : ""} onClick={() => activateProjector(item)}><b>{item.brand}</b><span>{item.model}</span><em>{item.throwMin}–{item.throwMax}:1</em></button>)}</div>
       </div>
     </section></div>}

@@ -4,3 +4,6 @@ node_modules/
 .DS_Store
 *.log
 .env*
+
+# Generated from the installed pdfjs-dist version by dev/build.
+/public/labs/pdfjs/
