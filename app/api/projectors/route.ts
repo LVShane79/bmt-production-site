@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export const runtime = "edge";
+// Web research can exceed Edge's 25-second first-response limit.
+export const runtime = "nodejs";
+export const maxDuration = 60;
 
 const prompt = `You are a helpful commercial projection equipment researcher for preliminary AV design. Prefer official manufacturer product pages, lens calculators, manuals, and specification PDFs. Never guess, mix variants, or claim compatibility without an official source.
 
@@ -36,6 +38,7 @@ function outputText(response: ResponsesPayload) {
 
 export async function POST(request: NextRequest) {
   const apiKey = process.env.OPENAI_API_KEY;
+  let researchTimeout: AbortSignal | undefined;
   try {
     const body = await request.json();
     const query = String(body.query || "").trim().slice(0, 220);
@@ -50,8 +53,11 @@ export async function POST(request: NextRequest) {
       );
     }
     const tools = [{ type: "web_search", search_context_size: "medium" }];
+    // Leave time to return a useful JSON error before the platform deadline.
+    researchTimeout = AbortSignal.timeout(55_000);
     const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
+      signal: researchTimeout,
       headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
       body: JSON.stringify({ model: "gpt-5.6-luna", reasoning: { effort: "low" }, tools, tool_choice: "required", input: `${prompt}\nResearch request: ${query}\nRoom constraints: ${constraints || "none supplied"}`, max_output_tokens: 2400 }),
     });
@@ -75,6 +81,9 @@ export async function POST(request: NextRequest) {
     if (!projectors.length) throw new Error("The official sources did not provide a complete projector and lens option.");
     return NextResponse.json({ projector: projectors[0], projectors });
   } catch (error) {
+    if (researchTimeout?.aborted) {
+      return NextResponse.json({ error: "Projector research took too long. Please try again with a model or lens, or use a specification sheet or manual entry." }, { status: 504 });
+    }
     return NextResponse.json({ error: error instanceof Error ? error.message : "The specification could not be processed." }, { status: 422 });
   }
 }
