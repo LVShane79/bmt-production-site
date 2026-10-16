@@ -1,4 +1,4 @@
-type GraphicKind = "layers" | "physical" | "switch" | "subnet" | "services" | "time" | "vlan" | "route" | "multicast" | "qos" | "wifi";
+type GraphicKind = "layers" | "physical" | "switch" | "subnet" | "services" | "time" | "vlan" | "route" | "multicast" | "qos" | "wifi" | "security" | "identity";
 
 type Props = {
   kind: GraphicKind;
@@ -217,6 +217,55 @@ function Wifi() {
   </>;
 }
 
+function Security() {
+  return <>
+    <Node x={24} y={40} label="ROOM TABLET" sub="PRIVATE KEY A" />
+    <Node x={24} y={142} label="TECHNICIAN" sub="PRIVATE KEY B" />
+    <Node x={24} y={244} label="GUEST" sub="PRIVATE KEY C" />
+    <g transform="translate(208 116)">
+      <rect className="lesson-svg-switch" width="128" height="112" rx="3" />
+      <text className="lesson-svg-label" x="18" y="26">ONE SSID</text>
+      <text className="lesson-svg-sub" x="18" y="54">IDENTIFY KEY</text>
+      <text className="lesson-svg-sub" x="18" y="73">APPLY ROLE</text>
+      <text className="lesson-svg-sub" x="18" y="92">ASSIGN VLAN</text>
+    </g>
+    <Node x={398} y={40} label="AV CONTROL" sub="VLAN 20" />
+    <Node x={398} y={142} label="SERVICE" sub="VLAN 60" />
+    <Node x={398} y={244} label="INTERNET" sub="VLAN 80" />
+    <path className="lesson-svg-vlan vlan-20" d="M136 67l72 72M336 139l62-72" />
+    <path className="lesson-svg-vlan vlan-30" d="M136 169h72M336 169h62" />
+    <path className="lesson-svg-flow" d="M136 271l72-66M336 205l62 66" />
+    <text className="lesson-svg-note" x="151" y="322">AUTHENTICATE → ASSIGN → ENFORCE</text>
+  </>;
+}
+
+function Identity() {
+  return <>
+    <g transform="translate(24 52)">
+      <rect className="lesson-svg-switch" width="150" height="105" rx="3" />
+      <text className="lesson-svg-label" x="18" y="27">AD DS</text>
+      <text className="lesson-svg-sub" x="18" y="55">LDAP · GROUPS</text>
+      <text className="lesson-svg-sub" x="18" y="76">KERBEROS · DNS</text>
+    </g>
+    <g transform="translate(24 207)">
+      <rect className="lesson-svg-switch" width="150" height="82" rx="3" />
+      <text className="lesson-svg-label" x="18" y="27">ENTRA ID</text>
+      <text className="lesson-svg-sub" x="18" y="55">OIDC · TOKENS</text>
+    </g>
+    <g transform="translate(222 113)">
+      <rect className="lesson-svg-poe" width="133" height="104" rx="2" />
+      <text className="lesson-svg-label" x="17" y="27">IDENTITY</text>
+      <text className="lesson-svg-sub" x="17" y="55">USER / DEVICE</text>
+      <text className="lesson-svg-sub" x="17" y="76">GROUP / CLAIM</text>
+    </g>
+    <Node x={404} y={78} label="AV ADMIN" sub="FULL ACCESS" />
+    <Node x={404} y={216} label="OPERATOR" sub="ROOM CONTROL" />
+    <path className="lesson-svg-vlan vlan-20" d="M174 105l48 40M174 248l48-54M355 145l49-39" />
+    <path className="lesson-svg-flow" d="M355 191l49 52" />
+    <text className="lesson-svg-note" x="150" y="322">IDENTITY → GROUP → AV ROLE</text>
+  </>;
+}
+
 export function LessonGraphic({ kind, figure = "01", compact = false }: Props) {
   const content = {
     layers: <Layers />,
@@ -230,6 +279,8 @@ export function LessonGraphic({ kind, figure = "01", compact = false }: Props) {
     multicast: <Multicast />,
     qos: <Qos />,
     wifi: <Wifi />,
+    security: <Security />,
+    identity: <Identity />,
   }[kind];
 
   return (

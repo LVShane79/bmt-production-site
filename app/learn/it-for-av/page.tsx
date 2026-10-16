@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   },
 };
 
-const graphicKinds = ["layers", "layers", "physical", "switch", "subnet", "services", "vlan", "route", "multicast", "qos", "wifi"] as const;
+const graphicKinds = ["layers", "layers", "physical", "switch", "subnet", "services", "vlan", "route", "multicast", "qos", "wifi", "security", "identity"] as const;
 
 export default function CoursePage() {
   return (
@@ -30,7 +30,7 @@ export default function CoursePage() {
           <p>A progressive networking and security course for commercial AV people who know the equipment—and want the missing IT details filled in properly.</p>
           <div className="course-stats">
             <span><strong>{lessons.length}</strong> lessons available</span>
-            <span><strong>8–15</strong> minutes each</span>
+            <span><strong>8–16</strong> minutes each</span>
             <span><strong>Free</strong> no sign-in</span>
           </div>
         </div>
@@ -68,10 +68,10 @@ export default function CoursePage() {
           <article className="lesson-card lesson-card-next">
             <div>
               <span>UP NEXT</span>
-              <strong>12</strong>
+              <strong>14</strong>
             </div>
-            <h3>Wi-Fi Security and Identity</h3>
-            <p>WPA2/WPA3, 802.1X, RADIUS, and assigning different VLANs from one SSID with private passphrases.</p>
+            <h3>SNMP and Syslog for AV</h3>
+            <p>Turn port counters, PoE events, traps, and timestamped logs into useful evidence before somebody power-cycles it away.</p>
           </article>
         </div>
       </section>
@@ -80,7 +80,7 @@ export default function CoursePage() {
         <p className="eyebrow"><span /> Where we are headed</p>
         <div>
           <h2>From packets to production.</h2>
-          <p>Future lessons continue through wireless security, identity, monitoring, certificates, secure remote access, Dante, AES67, NDI, IPMX, ST 2110, and complete AV network commissioning.</p>
+          <p>Future lessons continue through practical monitoring, web certificates, secure remote access, USB, Dante, AES67, NDI, IPMX, ST 2110, and complete AV network commissioning.</p>
         </div>
       </section>
       <SiteFooter />
