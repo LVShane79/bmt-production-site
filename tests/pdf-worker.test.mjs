@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
 import vm from 'node:vm';
+import { ESLint } from 'eslint';
 import { preparePdfWorker } from '../scripts/prepare-pdf-worker.mjs';
 
 const require = createRequire(import.meta.url);
@@ -49,10 +50,11 @@ test('worker preparation copies the exact installed PDF.js worker bytes', async 
   } finally { await rm(directory, { recursive: true, force: true }); }
 });
 
-test('both build and dev prepare the installed worker before starting Next.js', () => {
+test('both build and dev prepare the installed worker, and lint excludes generated vendor code', async () => {
   const pkg = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
   assert.equal(pkg.scripts.build, 'node scripts/prepare-pdf-worker.mjs && next build');
   assert.equal(pkg.scripts.dev, 'node scripts/prepare-pdf-worker.mjs && next dev');
   const installed = require('pdfjs-dist/package.json');
   assert.equal(installed.version, pkg.dependencies['pdfjs-dist']);
+  assert.equal(await new ESLint().isPathIgnored('public/labs/pdfjs/pdf.worker.min.mjs'), true);
 });
