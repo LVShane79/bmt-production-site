@@ -90,3 +90,8 @@ Remaining acceptance limits: Chromium explicitly blocks DevTools on this page, s
 ### PDF worker correction after final browser review
 
 The synthetic PDF chooser test on `155ca2e` exposed `Invalid workerSrc type` in the shared import pattern. Both labs used a Vite-style `?url` module import that did not provide a string under the Next.js production bundler. The build and dev lifecycle now copies the installed, pinned PDF.js worker into the same-origin public asset path; both parsers use that string URL. Run `npm run dev` / `npm run build` (or their pnpm equivalents) so the preparation command runs. The generated worker is deliberately excluded from source control and source archives; it is reproduced from the locked dependency. Tests check both real parser functions, text-file fallback, exact worker bytes, build/dev commands, and the production HTTP asset. Browser PDF re-verification and updated final validation results belong in the PR summary after this revision builds.
+
+
+### Asymmetric vertical-shift extraction
+
+The PDF acceptance fixture also exposed a pre-existing Projector parser assumption: `+60% / -40%` was displayed as symmetric `+60% / -60%`. The preview now preserves explicitly signed positive/negative pairs (including Unicode minus and reversed order) and still recognizes explicit `±` or `+/-` symmetric ranges. Missing, unsigned, one-sided, or unsupported vertical ranges are set to zero with a visible manual-review warning rather than silently invented symmetry. Unknown manufacturer formats still require manual review; this is a bounded text heuristic, not a replacement for the manufacturer shift chart.

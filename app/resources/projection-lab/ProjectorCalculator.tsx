@@ -63,6 +63,16 @@ async function readSpecificationText(file: File) {
   return pages.join("\n");
 }
 
+function parseVerticalLensShift(text: string): { up: number; down: number } | null {
+  // Only explicit signed pairs or ± ranges establish both travel limits.
+  const range = text.match(/(?:vertical\s+lens\s+shift|lens\s+shift\s+vertical)[^\d±+\-−]{0,45}([+\-−])\s*(\d{1,3}(?:\.\d+)?)\s*%?\s*(?:\/|,|to)\s*([+\-−])\s*(\d{1,3}(?:\.\d+)?)\s*%/i);
+  if (range && (range[1] === "+") !== (range[3] === "+")) {
+    return range[1] === "+" ? { up: Number(range[2]), down: Number(range[4]) } : { up: Number(range[4]), down: Number(range[2]) };
+  }
+  const symmetric = text.match(/(?:vertical\s+lens\s+shift|lens\s+shift\s+vertical)[^\d±+\-−]{0,45}(?:±|\+\s*\/\s*[-−])\s*(\d{1,3}(?:\.\d+)?)\s*%/i);
+  return symmetric ? { up: Number(symmetric[1]), down: Number(symmetric[1]) } : null;
+}
+
 function extractProjectorFromText(text: string, filename: string): Projector | null {
   const flat = text.replace(/\u00a0/g, " ").replace(/\s+/g, " ");
   const identity = filenameIdentity(filename);
@@ -70,15 +80,16 @@ function extractProjectorFromText(text: string, filename: string): Projector | n
     || flat.match(/(\d(?:\.\d+)?)\s*(?:[-–—~to]+\s*)(\d(?:\.\d+)?)\s*:\s*1/i);
   const lumens = Number(flat.match(/(\d{1,3}(?:,\d{3})+|\d{4,6})\s*(?:ANSI|ISO|center)?\s*lumens?/i)?.[1]?.replaceAll(",", "") || 0);
   const resolution = flat.match(/\b(4K UHD|4K|WUXGA|WXGA|Full HD|1080p|XGA)\b/i)?.[1] || "Not published";
-  const shiftV = Number(flat.match(/(?:vertical\s+lens\s+shift|lens\s+shift\s+vertical)[^\d]{0,45}(?:±|\+\/-)?\s*(\d{1,3}(?:\.\d+)?)\s*%/i)?.[1] || 0);
-  const shiftH = Number(flat.match(/(?:horizontal\s+lens\s+shift|lens\s+shift\s+horizontal)[^\d]{0,45}(?:±|\+\/-)?\s*(\d{1,3}(?:\.\d+)?)\s*%/i)?.[1] || 0);
+  const verticalShift = parseVerticalLensShift(flat);
+  const horizontalShift = flat.match(/(?:horizontal\s+lens\s+shift|lens\s+shift\s+horizontal)[^\d]{0,45}(?:±|\+\/-)?\s*(\d{1,3}(?:\.\d+)?)\s*%/i);
+  const shiftH = Number(horizontalShift?.[1] || 0);
   if (!throwMatch || !lumens) return null;
   return {
     ...identity, lumens, resolution,
     throwMin: Number(throwMatch[1]), throwMax: Number(throwMatch[2]),
     lens: flat.match(/\b(?:lens\s+model|projection\s+lens)[^\w]{0,12}([A-Z]{2,6}[-\s]?[A-Z0-9]{3,12})\b/i)?.[1] || "From uploaded specification",
-    shiftVUp: shiftV, shiftVDown: shiftV, shiftH,
-    note: `Extracted locally from ${filename}. ${shiftV || shiftH ? "Review the parsed values" : "Lens-shift values were not found and are set to zero"} before final design.`,
+    shiftVUp: verticalShift?.up ?? 0, shiftVDown: verticalShift?.down ?? 0, shiftH,
+    note: `Extracted locally from ${filename}. ${verticalShift ? "" : "Vertical lens-shift range is missing or unsupported and is set to zero; manual review required. "}${horizontalShift ? "" : "Horizontal lens shift was not found and is set to zero; manual review required. "}Review the parsed values before final design.`, 
   };
 }
 
