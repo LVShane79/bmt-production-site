@@ -52,8 +52,8 @@ function filenameIdentity(filename: string) {
 async function readSpecificationText(file: File) {
   if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) return file.text();
   const pdfjs = await import("pdfjs-dist");
-  const worker = await import("pdfjs-dist/build/pdf.worker.min.mjs?url");
-  pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
+  // Served from the same deployment and copied from the installed PDF.js version.
+  pdfjs.GlobalWorkerOptions.workerSrc = "/labs/pdfjs/pdf.worker.min.mjs";
   const pdf = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
   const pages: string[] = [];
   for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
