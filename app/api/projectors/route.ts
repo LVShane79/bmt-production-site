@@ -44,15 +44,10 @@ export async function POST(request: NextRequest) {
       : "";
     if (!query) return NextResponse.json({ error: "Enter a projector, lens, or design requirement." }, { status: 400 });
     if (!apiKey) {
-      const response = await fetch("https://bmt-projection-lab.lvshane79.chatgpt.site/api/projectors", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ query, constraints: body.constraints }),
-      });
-      return new NextResponse(await response.text(), {
-        status: response.status,
-        headers: { "content-type": response.headers.get("content-type") || "application/json" },
-      });
+      return NextResponse.json(
+        { error: "AI equipment lookup is temporarily unavailable. You can still use the calculator, import a specification, or enter equipment manually." },
+        { status: 503 },
+      );
     }
     const tools = [{ type: "web_search", search_context_size: "medium" }];
     const response = await fetch("https://api.openai.com/v1/responses", {
