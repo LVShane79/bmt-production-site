@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   },
 };
 
-const graphicKinds = ["layers", "layers", "physical", "switch", "subnet", "services", "vlan", "route", "multicast", "qos", "wifi", "security", "identity"] as const;
+const graphicKinds = ["layers", "layers", "physical", "switch", "subnet", "services", "vlan", "route", "multicast", "qos", "wifi", "security", "identity", "services", "security", "route", "security", "physical", "multicast"] as const;
 
 export default function CoursePage() {
   return (
@@ -65,14 +65,7 @@ export default function CoursePage() {
               </div>
             </article>
           ))}
-          <article className="lesson-card lesson-card-next">
-            <div>
-              <span>UP NEXT</span>
-              <strong>14</strong>
-            </div>
-            <h3>SNMP and Syslog for AV</h3>
-            <p>Turn port counters, PoE events, traps, and timestamped logs into useful evidence before somebody power-cycles it away.</p>
-          </article>
+
         </div>
       </section>
 
@@ -80,7 +73,7 @@ export default function CoursePage() {
         <p className="eyebrow"><span /> Where we are headed</p>
         <div>
           <h2>From packets to production.</h2>
-          <p>Future lessons continue through practical monitoring, web certificates, secure remote access, USB, Dante, AES67, NDI, IPMX, ST 2110, and complete AV network commissioning.</p>
+          <p>Continue into practical monitoring, certificates, remote access, USB and AV-over-IP architecture. Future lessons explore individual media platforms and complete AV network commissioning.</p>
         </div>
       </section>
       <SiteFooter />

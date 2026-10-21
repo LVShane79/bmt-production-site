@@ -5,6 +5,9 @@ import { JsonLd } from "../../../components/JsonLd";
 import { SiteFooter, SiteHeader } from "../../../components/SiteShell";
 import { absoluteUrl, organizationId } from "../../../lib/site";
 import { LessonGraphic } from "../LessonGraphic";
+import { LessonMarkdown, markdownHeadings } from "../LessonMarkdown";
+import practicalExamples from "../practical-examples.json";
+import { SnmpLabLink } from "../SnmpLabLink";
 import { getLesson, lessons } from "../lessons";
 
 type PageProps = { params: Promise<{ slug: string }> };
@@ -33,13 +36,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-const graphicKinds = ["layers", "layers", "physical", "switch", "subnet", "services", "vlan", "route", "multicast", "qos", "wifi", "security", "identity"] as const;
+const graphicKinds = ["layers", "layers", "physical", "switch", "subnet", "services", "vlan", "route", "multicast", "qos", "wifi", "security", "identity", "services", "security", "route", "security", "physical", "multicast"] as const;
 
 export default async function LessonPage({ params }: PageProps) {
   const { slug } = await params;
   const lesson = getLesson(slug);
   if (!lesson) notFound();
 
+  const practicalExample = (practicalExamples as Record<string, string>)[String(lesson.number)];
   const lessonIndex = lessons.findIndex((item) => item.slug === lesson.slug);
   const previous = lessons[lessonIndex - 1];
   const next = lessons[lessonIndex + 1];
@@ -78,15 +82,17 @@ export default async function LessonPage({ params }: PageProps) {
           <aside className="lesson-rail">
             <span>In this lesson</span>
             <ol>
-              <li><a href="#objectives">Learning objectives</a></li>
+              {lesson.markdown ? markdownHeadings(lesson.markdown).map((heading) => <li key={heading.id}><a href={`#${heading.id}`}>{heading.text}</a></li>) : <li><a href="#objectives">Learning objectives</a></li>}
               {lesson.sections.map((section, index) => <li key={section.heading}><a href={`#section-${index + 1}`}>{section.heading}</a></li>)}
-              <li><a href="#field-examples">AV field examples</a></li>
-              <li><a href="#exercise">Exercise + review</a></li>
+              {!lesson.markdown && <li><a href="#field-examples">AV field examples</a></li>}
+              {!lesson.markdown && <li><a href="#exercise">Exercise + review</a></li>}
             </ol>
             <Link href="/learn/it-for-av">← Course index</Link>
+            {lesson.number === 14 && <SnmpLabLink />}
           </aside>
 
           <div className="lesson-body">
+            {lesson.markdown ? <><LessonMarkdown content={lesson.markdown} />{lesson.number === 14 && <SnmpLabLink />}</> : <>
             <section className="lesson-objectives" id="objectives">
               <span>LEARNING OBJECTIVES</span>
               <ul>{lesson.objectives.map((objective) => <li key={objective}>{objective}</li>)}</ul>
@@ -131,13 +137,15 @@ export default async function LessonPage({ params }: PageProps) {
             </section>
 
             <div className="lesson-next-note"><span>WHERE THIS GOES NEXT</span><p>{lesson.next}</p></div>
+            </>}
+            {practicalExample && <section className="lesson-practical-example"><LessonMarkdown content={practicalExample} /></section>}
           </div>
         </div>
       </article>
 
       <nav className="lesson-pagination" aria-label="Lesson navigation">
         {previous ? <Link href={`/learn/it-for-av/${previous.slug}`}><span>← Previous lesson</span><strong>{previous.title}</strong></Link> : <Link href="/learn/it-for-av"><span>← Course</span><strong>IT for AV index</strong></Link>}
-          {next ? <Link href={`/learn/it-for-av/${next.slug}`}><span>Next lesson →</span><strong>{next.title}</strong></Link> : <div><span>Next lesson</span><strong>SNMP and Syslog for AV</strong><i>Coming next</i></div>}
+          {next ? <Link href={`/learn/it-for-av/${next.slug}`}><span>Next lesson →</span><strong>{next.title}</strong></Link> : <div><span>Next lesson</span><strong>More practical AV networking</strong><i>Coming next</i></div>}
       </nav>
       <SiteFooter />
     </main>

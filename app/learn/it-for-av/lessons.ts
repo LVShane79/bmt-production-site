@@ -1,3 +1,5 @@
+import additionalLessons from "./additional-lessons.json";
+
 export type LessonSection = {
   heading: string;
   paragraphs: string[];
@@ -6,6 +8,7 @@ export type LessonSection = {
 };
 
 export type Lesson = {
+  markdown?: string;
   number: number;
   slug: string;
   title: string;
@@ -977,6 +980,7 @@ export const lessons: Lesson[] = [
     ],
     next: "Next: SNMP and syslog in real AV systems—what to monitor, what the numbers mean, and how to preserve evidence before someone power-cycles the crime scene.",
   },
+  ...additionalLessons,
 ];
 
 export function getLesson(slug: string) {
