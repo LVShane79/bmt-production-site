@@ -1467,3 +1467,6 @@ footer div a { font-size: 13px; }
 .lesson-companion p { font-size: .9rem; line-height: 1.6; margin: 0 0 1rem; }
 .lesson-companion a { color: #006c4b; font-weight: 700; }
 .lesson-body { min-width: 0; }
+
+.lesson-markdown ul { list-style: disc; }
+.lesson-markdown ol { list-style: decimal; }

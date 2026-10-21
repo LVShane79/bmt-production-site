@@ -1,4 +1,4 @@
-type GraphicKind = "layers" | "physical" | "switch" | "subnet" | "services" | "time" | "vlan" | "route" | "multicast" | "qos" | "wifi" | "security" | "identity";
+type GraphicKind = "layers" | "physical" | "switch" | "subnet" | "services" | "time" | "vlan" | "route" | "multicast" | "qos" | "wifi" | "security" | "identity" | "monitoring" | "usb";
 
 type Props = {
   kind: GraphicKind;
@@ -266,6 +266,29 @@ function Identity() {
   </>;
 }
 
+function Monitoring() {
+  return <>
+    <Node x={32} y={70} label="SWITCH / AGENT" sub="COUNTERS + STATE" />
+    <Node x={380} y={70} label="NMS / POLLER" sub="STORED HISTORY" />
+    <path className="lesson-svg-flow" d="M144 86h236M380 109H144" />
+    <text className="lesson-svg-note" x="192" y="70">POLL / RESPONSE</text>
+    <Node x={206} y={230} label="EVENT COLLECTOR" sub="TRAPS + SYSLOG" />
+    <path className="lesson-svg-flow" d="M88 125v130h118M436 125v130H318" />
+    <text className="lesson-svg-note" x="140" y="315">ALIGN TIMESTAMPS · KEEP EVIDENCE</text>
+  </>;
+}
+function Usb() {
+  return <>
+    <Node x={28} y={130} label="USB HOST" sub="LAPTOP / ROOM PC" />
+    <Node x={214} y={130} label="HUB / EXTENDER" sub="VERIFY SUPPORT" />
+    <Node x={400} y={130} label="USB DEVICE" sub="CAMERA / AUDIO" />
+    <path className="lesson-svg-flow" d="M140 157h74M326 157h74" />
+    <text className="lesson-svg-label" x="92" y="70">CONNECTOR ≠ CAPABILITY</text>
+    <text className="lesson-svg-note" x="74" y="244">DATA RATE · TRANSFER TYPE · POWER</text>
+    <text className="lesson-svg-note" x="105" y="279">USB-C: VERIFY PD + DP ALT MODE</text>
+  </>;
+}
+
 export function LessonGraphic({ kind, figure = "01", compact = false }: Props) {
   const content = {
     layers: <Layers />,
@@ -281,6 +304,8 @@ export function LessonGraphic({ kind, figure = "01", compact = false }: Props) {
     wifi: <Wifi />,
     security: <Security />,
     identity: <Identity />,
+    monitoring: <Monitoring />,
+    usb: <Usb />,
   }[kind];
 
   return (
