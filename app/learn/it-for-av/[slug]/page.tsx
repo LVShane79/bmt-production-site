@@ -84,6 +84,8 @@ export default async function LessonPage({ params }: PageProps) {
             <ol>
               {lesson.markdown ? markdownHeadings(lesson.markdown).map((heading) => <li key={heading.id}><a href={`#${heading.id}`}>{heading.text}</a></li>) : <li><a href="#objectives">Learning objectives</a></li>}
               {lesson.sections.map((section, index) => <li key={section.heading}><a href={`#section-${index + 1}`}>{section.heading}</a></li>)}
+              {lesson.number === 21 && <li><a href="#ndi-live-streaming-diagram">Typical live-streaming setup</a></li>}
+              {practicalExample && markdownHeadings(practicalExample).map((heading) => <li key={`practical-${heading.id}`}><a href={`#${heading.id}`}>{heading.text}</a></li>)}
               {!lesson.markdown && <li><a href="#field-examples">AV field examples</a></li>}
               {!lesson.markdown && <li><a href="#exercise">Exercise + review</a></li>}
             </ol>
