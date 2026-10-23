@@ -920,7 +920,7 @@ export const lessons: Lesson[] = [
       "Distinguish a directory, LDAP, Active Directory Domain Services, and Microsoft Entra ID.",
       "Recognize where Kerberos, DNS, time, certificates, and group membership affect an AV integration.",
       "Translate directory groups into useful AV application roles.",
-      "Define the information BMT needs while leaving directory administration with the client's IT owner.",
+      "Define the information an AV integrator needs while leaving directory administration with the client's IT owner.",
     ],
     sections: [
       {
@@ -935,7 +935,7 @@ export const lessons: Lesson[] = [
         heading: "What an AV platform usually needs",
         paragraphs: [
           "An on-premises AV management server offering LDAP integration may use a limited service account to find users and read group membership from AD DS. The application then maps approved directory groups to local roles such as administrator, support technician, or operator.",
-          "A cloud or browser application may instead redirect the user to Entra ID and receive a signed token after authentication. BMT Network Manager Web follows this modern model through Microsoft sign-in and Graph permissions; it is not an LDAP client.",
+          "A cloud or browser application may instead redirect the user to Entra ID and receive a signed token after authentication. For example, a browser-based AV project application can use Microsoft sign-in and Graph permissions without acting as an LDAP client.",
           "Authentication proves identity. Authorization decides what that identity may do. If a user can sign in but receives access denied, the likely failure is group lookup, role mapping, consent, or application policy—not the user's password.",
         ],
         bullets: [
@@ -962,7 +962,7 @@ export const lessons: Lesson[] = [
     ],
     examples: [
       { title: "LDAP-backed AV monitoring", text: "The platform finds the user but denies access. Network reachability, the bind account, and the directory search already worked; inspect group membership, nested-group support, and the group-to-role mapping next." },
-      { title: "BMT Network Manager Web", text: "Microsoft sign-in succeeds but project files remain unavailable. Investigate Entra application configuration, token scope, Graph permission, consent, and the user's file access—not LDAP settings or an on-premises domain controller." },
+      { title: "Cloud AV project application", text: "Microsoft sign-in succeeds but project files remain unavailable. Investigate Entra application configuration, token scope, Graph permission, consent, and the user's file access—not LDAP settings or an on-premises domain controller." },
     ],
     glossary: [
       { term: "Directory", definition: "Structured store of users, groups, devices, services, and related attributes." },
@@ -976,7 +976,7 @@ export const lessons: Lesson[] = [
     review: [
       { question: "Is LDAP the same thing as Active Directory?", answer: "No. LDAP is a protocol; AD DS is a directory and domain platform that supports LDAP among several other services." },
       { question: "Is Entra ID simply an AD domain controller in Microsoft's cloud?", answer: "No. It is a cloud identity provider built around modern application authentication, not a native LDAP and traditional domain replacement." },
-      { question: "What identity information should BMT own in the AV documentation?", answer: "The required method, server or provider, encrypted connection, approved groups, role mappings, service-account owner, certificate owner, and renewal expectations—never the actual passwords." },
+      { question: "What identity information belongs in the AV documentation?", answer: "The required method, server or provider, encrypted connection, approved groups, role mappings, service-account owner, certificate owner, and renewal expectations—never the actual passwords." },
     ],
     next: "Next: SNMP and syslog in real AV systems—what to monitor, what the numbers mean, and how to preserve evidence before someone power-cycles the crime scene.",
   },
