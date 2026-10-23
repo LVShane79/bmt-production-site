@@ -10,6 +10,6 @@ export function markdownHeadings(content: string) {
 export function LessonMarkdown({ content }: { content: string }) {
   return <div className="lesson-markdown"><Markdown remarkPlugins={[remarkGfm]} components={{
     h2: ({ children }) => <h2 id={headingId(String(children))}>{children}</h2>,
-    table: ({ children }) => <div className="lesson-table-scroll" tabIndex={0}><table>{children}</table></div>,
+    table: ({ children }) => <div className="lesson-table-scroll" role="region" aria-label="Lesson comparison table; scroll horizontally if needed" tabIndex={0}><table>{children}</table></div>,
   }}>{content}</Markdown></div>;
 }

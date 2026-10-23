@@ -1458,8 +1458,8 @@ footer div a { font-size: 13px; }
 .lesson-markdown blockquote { border-left: 3px solid #00a383; margin: 1.4rem 0; padding: .3rem 1.2rem; background: #eef6f2; }
 .lesson-markdown hr { border: 0; border-top: 1px solid #d9e3df; margin: 2rem 0; }
 .lesson-table-scroll { overflow-x: auto; max-width: 100%; margin: 1.5rem 0; }
-.lesson-markdown table { border-collapse: collapse; width: 100%; font-size: .92rem; }
-.lesson-markdown th, .lesson-markdown td { text-align: left; border-bottom: 1px solid #d1ded7; padding: .7rem; vertical-align: top; }
+.lesson-markdown table { border-collapse: collapse; width: 100%; font-size: .92rem; overflow-wrap: normal; word-break: normal; hyphens: none; }
+.lesson-markdown th, .lesson-markdown td { text-align: left; border-bottom: 1px solid #d1ded7; padding: .7rem; vertical-align: top; min-width: 10rem; }
 .lesson-markdown th { background: #e9f1ed; }
 .lesson-companion { margin: 2rem 0; padding: 1.3rem; border: 1px solid #afd8c9; border-left: 4px solid #00a383; background: #eef7f2; }
 .lesson-companion span { display: block; font-size: .65rem; letter-spacing: .12em; color: #007451; }
