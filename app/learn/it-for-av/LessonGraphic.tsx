@@ -302,10 +302,12 @@ function Streaming() {
     </g>
     <Node x={405} y={34} label="AUDIO I/O" sub="MIX / EMBED" />
     <Node x={405} y={139} label="PRODUCTION PC" sub="OBS / vMix" />
-    <Node x={405} y={244} label="STREAM PLATFORM" sub="RTMP(S) / SRT" />
+    <Node x={405} y={244} label="PLATFORM" sub="ENCODED UPLOAD" />
+    <Node x={204} y={244} label="LOCAL DISPLAY" sub="NDI DECODER" />
+    <path className="lesson-svg-flow" d="M260 213v31" />
     <path className="lesson-svg-vlan vlan-20" d="M128 70l57 62M128 263l57-72M335 158h70" />
     <path className="lesson-svg-flow" d="M461 89v50M461 194v50" />
-    <text className="lesson-svg-note" x="82" y="320">NDI STAYS ON LAN · ENCODED STREAM USES INTERNET UPLOAD</text>
+    <text className="lesson-svg-note" x="82" y="320">THIS SETUP: NDI ON LAN · ENCODED PROGRAM TO INTERNET</text>
   </>;
 }
 
