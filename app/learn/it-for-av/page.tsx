@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   },
 };
 
-const graphicKinds = ["layers", "layers", "physical", "switch", "subnet", "services", "vlan", "route", "multicast", "qos", "wifi", "security", "identity", "monitoring", "security", "route", "security", "usb", "multicast"] as const;
+const graphicKinds = ["layers", "layers", "physical", "switch", "subnet", "services", "vlan", "route", "multicast", "qos", "wifi", "security", "identity", "monitoring", "security", "route", "security", "usb", "multicast", "time", "multicast"] as const;
 
 export default function CoursePage() {
   return (

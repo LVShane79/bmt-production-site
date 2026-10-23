@@ -453,7 +453,7 @@ export const lessons: Lesson[] = [
         heading: "Native VLAN mismatches are sneaky",
         paragraphs: [
           "If one switch treats untagged trunk traffic as VLAN 10 while the other treats it as VLAN 20, the link may remain up while traffic quietly enters the wrong network. DHCP, management, and discovery failures can appear inconsistent because only the untagged VLAN is affected.",
-          "A practical BMT standard is to document every trunk's allowed VLANs and tagging state. When supported, tagging all operational VLANs across infrastructure links removes one category of ambiguity.",
+          "A practical design practice is to document every trunk's allowed VLANs and tagging state. When supported, tagging all operational VLANs across infrastructure links removes one category of ambiguity.",
         ],
       },
     ],
@@ -616,7 +616,7 @@ export const lessons: Lesson[] = [
         paragraphs: [
           "A receiver can disappear without sending a leave message. The IGMP querier periodically asks which memberships are still required. Active receivers respond, switches refresh their snooping tables, and stale entries eventually age out.",
           "Snooping without an active querier may appear to work initially. Later, memberships can expire and behavior becomes platform-dependent: streams may stop, flood, or change unpredictably. That is why 'IGMP snooping enabled' is not a complete commissioning result.",
-          "The querier does not have to be the default gateway. A Layer 3-capable switch can often provide the querier function while an external firewall remains the VLAN gateway. Multiple querier-capable devices may participate in an election, but BMT should document the intended active device, its address, and any deliberate backup.",
+          "The querier does not have to be the default gateway. A Layer 3-capable switch can often provide the querier function while an external firewall remains the VLAN gateway. Multiple querier-capable devices may participate in an election, so document the intended active device, its address, and any deliberate backup.",
         ],
       },
       {
@@ -953,9 +953,9 @@ export const lessons: Lesson[] = [
         ],
       },
       {
-        heading: "BMT's ownership line",
+        heading: "Define the ownership line",
         paragraphs: [
-          "BMT should define what the AV application requires, verify network reachability, configure supported integration fields, map approved groups to roles, and test acceptance and rejection. The client's IT team should own domain controllers, directory structure, identity lifecycle, certificate authorities, and organization-wide security policy unless those services are explicitly within BMT's scope.",
+          "Define what the AV application requires, verify network reachability, configure supported integration fields, map approved groups to roles, and test acceptance and rejection. Agree in writing which team owns domain controllers, directory structure, identity lifecycle, certificate authorities, and organization-wide security policy before commissioning.",
           "Record server names, identity method, encrypted connection requirement, approved groups, role mappings, service-account owner, certificate owner, and renewal expectations. Do not record passwords. This is enough to engineer a dependable integration without adopting someone else's forest and all the squirrels living in it.",
         ],
       },
