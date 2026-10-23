@@ -138,6 +138,7 @@ export default async function LessonPage({ params }: PageProps) {
 
             <div className="lesson-next-note"><span>WHERE THIS GOES NEXT</span><p>{lesson.next}</p></div>
             </>}
+            {lesson.number === 21 && <section className="lesson-practical-example" aria-labelledby="ndi-live-streaming-diagram"><span>LIVE STREAMING PATH</span><h2 id="ndi-live-streaming-diagram">A typical NDI live-streaming setup.</h2><LessonGraphic kind="streaming" figure="21.A" /></section>}
             {practicalExample && <section className="lesson-practical-example"><LessonMarkdown content={practicalExample} /></section>}
           </div>
         </div>

@@ -1,4 +1,4 @@
-type GraphicKind = "layers" | "physical" | "switch" | "subnet" | "services" | "time" | "vlan" | "route" | "multicast" | "qos" | "wifi" | "security" | "identity" | "monitoring" | "usb";
+type GraphicKind = "layers" | "physical" | "switch" | "subnet" | "services" | "time" | "vlan" | "route" | "multicast" | "qos" | "wifi" | "security" | "identity" | "monitoring" | "usb" | "streaming";
 
 type Props = {
   kind: GraphicKind;
@@ -289,6 +289,26 @@ function Usb() {
   </>;
 }
 
+function Streaming() {
+  return <>
+    <Node x={16} y={42} label="NDI CAMERA" sub="PoE / ETHERNET" />
+    <Node x={16} y={235} label="HDMI / SDI" sub="OPTIONAL ENCODER" />
+    <g transform="translate(185 108)">
+      <rect className="lesson-svg-switch" width="150" height="105" rx="3" />
+      <text className="lesson-svg-label" x="16" y="26">MANAGED SWITCH</text>
+      <text className="lesson-svg-sub" x="16" y="54">GIGABIT + PoE</text>
+      <text className="lesson-svg-sub" x="16" y="75">NDI LAN PATHS</text>
+      <text className="lesson-svg-sub" x="16" y="93">MONITOR LOAD</text>
+    </g>
+    <Node x={405} y={34} label="AUDIO I/O" sub="MIX / EMBED" />
+    <Node x={405} y={139} label="PRODUCTION PC" sub="OBS / vMix" />
+    <Node x={405} y={244} label="STREAM PLATFORM" sub="RTMP(S) / SRT" />
+    <path className="lesson-svg-vlan vlan-20" d="M128 70l57 62M128 263l57-72M335 158h70" />
+    <path className="lesson-svg-flow" d="M461 89v50M461 194v50" />
+    <text className="lesson-svg-note" x="82" y="320">NDI STAYS ON LAN · ENCODED STREAM USES INTERNET UPLOAD</text>
+  </>;
+}
+
 export function LessonGraphic({ kind, figure = "01", compact = false }: Props) {
   const content = {
     layers: <Layers />,
@@ -306,6 +326,7 @@ export function LessonGraphic({ kind, figure = "01", compact = false }: Props) {
     identity: <Identity />,
     monitoring: <Monitoring />,
     usb: <Usb />,
+    streaming: <Streaming />,
   }[kind];
 
   return (
