@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   },
 };
 
-const graphicKinds = ["layers", "layers", "physical", "switch", "subnet", "services", "vlan", "route", "multicast", "qos", "wifi", "security", "identity", "monitoring", "security", "route", "security", "usb", "multicast", "time", "multicast"] as const;
+const graphicKinds = ["layers", "layers", "physical", "switch", "subnet", "services", "vlan", "route", "multicast", "qos", "wifi", "security", "identity", "monitoring", "security", "route", "security", "usb", "multicast", "time", "multicast", "multicast", "time", "route", "usb"] as const;
 
 export default function CoursePage() {
   return (
@@ -30,7 +30,7 @@ export default function CoursePage() {
           <p>A progressive networking and security course for commercial AV people who know the equipment—and want the missing IT details filled in properly.</p>
           <div className="course-stats">
             <span><strong>{lessons.length}</strong> lessons available</span>
-            <span><strong>8–16</strong> minutes each</span>
+            <span><strong>8–25</strong> minutes each</span>
             <span><strong>Free</strong> no sign-in</span>
           </div>
         </div>
@@ -73,7 +73,7 @@ export default function CoursePage() {
         <p className="eyebrow"><span /> Where we are headed</p>
         <div>
           <h2>From packets to production.</h2>
-          <p>Continue into practical monitoring, certificates, remote access, USB and AV-over-IP architecture. Future lessons explore individual media platforms and complete AV network commissioning.</p>
+          <p>Explore practical monitoring, certificates, remote access, USB, Dante, NDI, IPMX and ST 2110, then bring the pieces together in AV network design and commissioning.</p>
         </div>
       </section>
       <SiteFooter />
