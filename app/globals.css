@@ -32,6 +32,11 @@ button, input, textarea { font: inherit; }
 /* Private admin surface: intentionally independent from the public site shell. */
 .admin-shell { background: var(--graphite-2); color: var(--warm-white); min-height: 100vh; padding: clamp(32px,7vw,96px); }
 .admin-shell h1 { font-size: clamp(46px,8vw,88px); font-weight: 500; letter-spacing: -.06em; line-height: .95; margin: 14px 0; }
+.admin-auth-shell { align-items: flex-start; display: flex; flex-direction: column; }
+.admin-auth-shell h1 { font-size: clamp(42px,5vw,64px); letter-spacing: -.05em; }
+.admin-auth-shell .admin-intro { font-size: 16px; margin-bottom: 0; }
+/* Fallback guard for generic site control styles when Clerk mounts its card. */
+.admin-auth-shell .cl-rootBox, .admin-auth-shell .cl-rootBox button, .admin-auth-shell .cl-rootBox input { font-family: "Avenir Next", Avenir, Inter, "Helvetica Neue", sans-serif; }
 .admin-kicker { color: var(--bmt-teal); font-size: 11px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
 .admin-intro { color: rgba(245,246,242,.66); font-size: 18px; line-height: 1.6; max-width: 620px; }
 .admin-cards { display: grid; gap: 20px; grid-template-columns: repeat(2,minmax(0,1fr)); margin-top: 54px; max-width: 1050px; }
