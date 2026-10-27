@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 
 // Portable cutover contracts: the actual DB adapter is intentionally not invoked.
 test("unknown migration history is never send-ready", () => {
@@ -38,6 +39,15 @@ test("missing database configuration never selects a production fixture", () => 
   assert.equal(mode({ production: true, fixture: true, databaseUrl: "" }), "unavailable");
   assert.equal(mode({ production: false, fixture: false, databaseUrl: "" }), "unavailable");
   assert.equal(mode({ production: false, fixture: true, databaseUrl: "" }), "fixture");
+});
+
+test("Clerk auth completion is pinned to the private admin route", async () => {
+  for (const route of ["app/admin/sign-in/[[...rest]]/page.tsx", "app/admin/sign-up/[[...rest]]/page.tsx"]) {
+    const source = await readFile(route, "utf8");
+    assert.match(source, /forceRedirectUrl="\/admin"/);
+    assert.match(source, /fallbackRedirectUrl="\/admin"/);
+    assert.doesNotMatch(source, /redirectUrl=|afterSign(?:In|Up)Url=/);
+  }
 });
 test("transaction import is idempotent by stable source IDs", () => {
   const sourceIds = new Set(); const importOne = (id) => !sourceIds.has(id) && (sourceIds.add(id), true);
