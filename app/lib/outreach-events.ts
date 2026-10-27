@@ -1,0 +1,7 @@
+import type { Lead } from "./crm";
+export type OutreachStage = "initial" | "first_followup" | "final_followup";
+export type OutreachEvidence = { id:string; leadId:string; date:string; stage:OutreachStage; confidence:"explicit"|"inferred"; source:"notes"|"record" };
+const iso = /\b(20\d{2}-\d{2}-\d{2})\b/;
+const stage = (line:string):OutreachStage|null => /first\s*follow[ -]?up|follow[ -]?up\s*1/i.test(line) ? "first_followup" : /final\s*follow[ -]?up/i.test(line) ? "final_followup" : /personalized outreach|initial outreach/i.test(line) ? "initial" : null;
+const positive = (line:string) => /(?:confirmed\s*)?sent\b/i.test(line) && !/not\s+sent|scheduled|due|draft/i.test(line);
+export function reconstructOutreach(lead:Lead):OutreachEvidence[] { const snapshot=lead.legacySnapshot as Record<string,unknown>; const notes=typeof snapshot?.notes==="string"?snapshot.notes:""; const seen=new Set<string>(); const found:OutreachEvidence[]=[]; for(const line of notes.replaceAll("\\n","\n").split(/\r?\n/)){const date=line.match(iso)?.[1], kind=stage(line); if(!date||!kind||!positive(line))continue;const key=`${lead.id}:${date}:${kind}`;if(!seen.has(key)){seen.add(key);found.push({id:key,leadId:lead.id,date,stage:kind,confidence:"explicit",source:"notes"});}} if(lead.firstContact&& !found.some(x=>x.stage==="initial"&&x.date===lead.firstContact)&&["Contacted","Bounced"].includes(lead.status)){found.push({id:`${lead.id}:${lead.firstContact}:initial:record`,leadId:lead.id,date:lead.firstContact,stage:"initial",confidence:"inferred",source:"record"});} return found; }

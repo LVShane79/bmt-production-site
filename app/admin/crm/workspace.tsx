@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { Lead, LeadStatus } from "../../lib/crm";
-import { buildCrmDashboard, isSuppressed, type CrmDashboardData } from "../../lib/crm-dashboard";
+import { buildCrmDashboard, isAutomatedEmailEligible, isCallable, type CrmDashboardData } from "../../lib/crm-dashboard";
 
 const statuses: LeadStatus[] = ["Research", "Ready", "Contacted", "Replied", "Qualified", "Proposal", "Won", "Lost", "Bounced", "Opted out"];
 type Section = "overview" | "companies" | "campaigns" | "activity" | "followups" | "email" | "calls" | "research";
@@ -15,8 +15,8 @@ export function CrmWorkspace() {
   const [data, setData] = useState<CrmDashboardData>({ leads: [], events: [], campaigns: [] }); const [selected, setSelected] = useState<Lead | null>(null); const [section, setSection] = useState<Section>("overview"); const [filter, setFilter] = useState("All"); const [query, setQuery] = useState(""); const [error, setError] = useState(""); const [draftLeadId, setDraftLeadId] = useState(""); const [draftSubject, setDraftSubject] = useState("Introduction from Black Mountain Technologies"); const [draftBody, setDraftBody] = useState("Hi,\n\nI’m reaching out from Black Mountain Technologies. I’d welcome a brief conversation about engineering support when your team needs it.\n\nBest,"); const [campaignName, setCampaignName] = useState("Reviewed outreach"); const [researchPrompt, setResearchPrompt] = useState("Confirm the company’s current commercial-AV focus, relevant projects, and the best public contact path. Cite the source URLs.");
   const load = () => fetch("/api/admin/crm/dashboard", { cache: "no-store" }).then(async (response) => response.ok ? setData(await response.json()) : setError("Unable to load private CRM.")).catch(() => setError("Unable to load private CRM.")); useEffect(() => { load(); }, []);
   const dashboard = useMemo(() => buildCrmDashboard(data), [data]);
-  const emailCandidates = useMemo(() => data.leads.filter((lead) => Boolean(lead.email) && lead.historyState === "clear" && !isSuppressed(lead)), [data.leads]);
-  const callCandidates = useMemo(() => data.leads.filter((lead) => Boolean(lead.phone) && !isSuppressed(lead)), [data.leads]);
+  const emailCandidates = useMemo(() => data.leads.filter((lead) => Boolean(lead.email) && isAutomatedEmailEligible(lead)), [data.leads]);
+  const callCandidates = useMemo(() => data.leads.filter(isCallable), [data.leads]);
   const draftLead = emailCandidates.find((lead) => lead.id === draftLeadId) ?? emailCandidates[0] ?? null;
   const copyText = async (text: string) => { try { await navigator.clipboard.writeText(text); setError(""); } catch { setError("Copy was blocked by this browser. Select the text and copy it manually."); } };
   const view = useMemo(() => data.leads.filter((lead) => { const matches = `${lead.company} ${lead.market} ${lead.email ?? ""}`.toLowerCase().includes(query.toLowerCase()); if (!matches) return false; if (filter === "Follow-ups") return Boolean(lead.followUp); if (filter === "Protected") return lead.historyState !== "clear"; if (filter === "Review first") return lead.historyState === "review"; return filter === "All" || lead.status === filter; }), [data.leads, filter, query]);
