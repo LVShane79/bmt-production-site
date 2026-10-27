@@ -66,3 +66,7 @@ test("workflow migration qualifies lead identifiers inside its returned-table fu
   assert.match(source,/PERFORM lead\.id FROM crm_leads AS lead/);
   assert.doesNotMatch(source,/PERFORM id FROM crm_leads/);
 });
+test("workflow versions advance even for multiple saves in one transaction", async () => {
+  const source=await readFile("db/migrations/0002_crm_review_workflows.sql","utf8");
+  assert.match(source,/updated_at=GREATEST\(clock_timestamp\(\), crm_campaign_drafts\.updated_at \+ interval '1 microsecond'\)/);
+});

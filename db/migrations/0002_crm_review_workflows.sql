@@ -51,9 +51,10 @@ BEGIN
     INSERT INTO crm_campaign_drafts (id,name,sender_alias,subject,body,state)
       VALUES (p_id,p_name,'info@blackmountain.tech',p_subject,p_body,p_state);
   ELSE
-    UPDATE crm_campaign_drafts SET name=p_name,subject=p_subject,body=p_body,state=p_state,updated_at=now()
+    UPDATE crm_campaign_drafts SET name=p_name,subject=p_subject,body=p_body,state=p_state,
+      updated_at=GREATEST(clock_timestamp(), crm_campaign_drafts.updated_at + interval '1 microsecond')
       WHERE crm_campaign_drafts.id=p_id
-        AND floor(extract(epoch FROM updated_at)*1000000)::bigint::text=p_expected_version;
+        AND floor(extract(epoch FROM crm_campaign_drafts.updated_at)*1000000)::bigint::text=p_expected_version;
     IF NOT FOUND THEN RAISE EXCEPTION 'draft changed or missing' USING ERRCODE='P0002'; END IF;
   END IF;
   DELETE FROM crm_campaign_recipients WHERE draft_id=p_id;
