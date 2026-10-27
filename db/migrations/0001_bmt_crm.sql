@@ -1,0 +1,5 @@
+-- Run explicitly against Neon only after backup and signed migration review.
+-- No schema creation, cleanup, reconciliation, or seed runs on application reads.
+CREATE TABLE IF NOT EXISTS crm_leads (id text PRIMARY KEY, rank integer, company text NOT NULL, normalized_company text NOT NULL UNIQUE, market text NOT NULL, website text NOT NULL, email text, phone text, tier text NOT NULL CHECK(tier IN ('A','B','C')), score integer NOT NULL, fit text, angle text, status text NOT NULL, first_contact text, follow_up text, response text, next_step text, legacy_snapshot jsonb NOT NULL DEFAULT '{}'::jsonb, editable_notes text, history_state text NOT NULL CHECK(history_state IN ('review','protected','clear')), source_id text UNIQUE, created_at timestamptz NOT NULL, updated_at timestamptz NOT NULL);
+CREATE TABLE IF NOT EXISTS crm_outreach_history (id text PRIMARY KEY, lead_id text NOT NULL REFERENCES crm_leads(id), occurred_at timestamptz, event_type text NOT NULL, detail jsonb, source_id text UNIQUE);
+CREATE TABLE IF NOT EXISTS crm_campaign_imports (id text PRIMARY KEY, imported_at timestamptz NOT NULL, source_checksum text NOT NULL UNIQUE);

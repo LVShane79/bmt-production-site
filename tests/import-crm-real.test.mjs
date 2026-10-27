@@ -1,0 +1,14 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { mkdtemp, writeFile, rm } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+const exec=promisify(execFile);
+const run=async payload=>{const dir=await mkdtemp(join(tmpdir(),"bmt-import-"));const file=join(dir,"fixture.json");await writeFile(file,JSON.stringify(payload));try{return await exec(process.execPath,["scripts/import-crm.mjs","--input",file,"--dry-run"],{cwd:process.cwd()});}finally{await rm(dir,{recursive:true,force:true});}};
+const lead={id:"lead-1",rank:7,company:"Acme AV",market:"Denver",website:"https://acme.example",email:null,phone:null,tier:"A",score:12,fit:"fit",angle:"angle",status:"Contacted",firstContact:"2026-09-01",followUp:null,response:null,nextStep:"review",notes:"legacy campaign marker",history:[{id:"event-1",type:"sent",occurredAt:"2026-09-01",detail:{marker:"campaign"}}]};
+test("dry run accepts a representative legacy record without mutating storage",async()=>{const {stdout}=await run({leads:[lead],campaignImports:[{id:"campaign-1",checksum:"abc"}]});const result=JSON.parse(stdout);assert.equal(result.leadCount,1);assert.equal(result.unknownHistoryForcedToReview,0);});
+test("duplicate history source IDs are rejected globally",async()=>{await assert.rejects(run({leads:[lead,{...lead,id:"lead-2",company:"Other",history:[{...lead.history[0]}]}]}),/globally unique stable id/);});
+test("actual lead insert has one final bind per supplied parameter",async()=>{const source=await readFile("scripts/import-crm.mjs","utf8");const sql=source.match(/INSERT INTO crm_leads[\s\S]*?ON CONFLICT/)[0];const indexes=[...sql.matchAll(/\$(\d+)/g)].map(x=>Number(x[1]));assert.equal(Math.max(...indexes),22);assert.equal(new Set(indexes).size,22);assert.match(sql,/\$21,\$22\) ON CONFLICT/);});

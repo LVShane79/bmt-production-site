@@ -1,5 +1,8 @@
 node_modules/
 .next/
+.tools/
+.private-crm-source/
+tsconfig.tsbuildinfo
 .vercel/
 .DS_Store
 *.log
