@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { buildCrmDashboard, hasCompletedSequence, isAutomatedEmailEligible, isCallable, isSuppressed, reconstructOutreach } from "../app/lib/crm-dashboard.ts";
+import { normalizeCrmTimestamp } from "../app/lib/crm.ts";
 
 const lead = (overrides = {}) => ({ id: "one", rank: null, company: "Example Co", market: "Denver", website: "https://example.test", email: "ops@example.test", phone: null, tier: "A", score: 12, fit: null, angle: null, status: "Contacted", firstContact: "2026-09-24", followUp: "2026-10-01", response: null, nextStep: "Review", legacySnapshot: {}, editableNotes: null, historyState: "clear", updatedAt: "2026-10-01T00:00:00Z", ...overrides });
 
@@ -37,4 +38,11 @@ test("outreach reconstruction deduplicates legacy note observations without trea
 });
 test("channel eligibility holds completed email sequences without turning them into call DNC", () => {
  const done=lead({nextStep:"Monitor for reply; no further automated outreach",historyState:"clear",phone:"555"}); assert.equal(hasCompletedSequence(done),true); assert.equal(isAutomatedEmailEligible(done),false); assert.equal(isCallable(done),true); assert.equal(isCallable(lead({phone:"555",response:"Do not call"})),false);
+});
+test("imported history survives mutable status changes and rejects unsent note forms", () => {
+ const result=reconstructOutreach(lead({status:"Qualified",firstContact:null,legacySnapshot:{status:"Contacted",firstContact:"2026-09-10",notes:"2026-09-10 — Initial outreach unsent\n2026-09-11 — Initial outreach not sent\n2026-09-12 — Initial outreach draft\n2026-09-13 — Initial outreach scheduled\n2026-09-14 — Initial outreach due"}}));
+ assert.deepEqual(result.map((item)=>[item.date,item.stage,item.confidence]),[["2026-09-10","initial","inferred"]]);
+});
+test("database Date values retain ISO timestamps", () => {
+ assert.equal(normalizeCrmTimestamp(new Date("2026-09-24T12:34:56.000Z")),"2026-09-24T12:34:56.000Z");
 });
