@@ -3,4 +3,4 @@ import { requireOwner } from "../../lib/admin-auth";
 import { CrmWorkspace } from "./workspace";
 
 export const dynamic = "force-dynamic";
-export default async function CrmPage() { if (!(await requireOwner())) redirect("/"); return <CrmWorkspace />; }
+export default async function CrmPage() { if (!(await requireOwner())) redirect("/admin/sign-in"); return <CrmWorkspace />; }
