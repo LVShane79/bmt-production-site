@@ -54,3 +54,15 @@ test("transaction import is idempotent by stable source IDs", () => {
   assert.equal(importOne("lead-1"), true); assert.equal(importOne("lead-1"), false);
   assert.equal(sourceIds.size, 1);
 });
+test("new private workflow routes retain owner gates and no send implementation", async () => {
+  for (const route of ["app/api/admin/crm/campaign-drafts/route.ts", "app/api/admin/crm/work-outcomes/route.ts"]) {
+    const source=await readFile(route,"utf8");
+    assert.match(source,/ownerOrUnauthorized/);
+    assert.doesNotMatch(source,/nodemailer|gmail\.users|sendMail|messages\.send/);
+  }
+});
+test("workflow migration qualifies lead identifiers inside its returned-table function", async () => {
+  const source=await readFile("db/migrations/0002_crm_review_workflows.sql","utf8");
+  assert.match(source,/PERFORM lead\.id FROM crm_leads AS lead/);
+  assert.doesNotMatch(source,/PERFORM id FROM crm_leads/);
+});

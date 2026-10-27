@@ -31,6 +31,17 @@ test("dashboard retains actual campaign markers and immutable history events", (
   assert.deepEqual(model.campaigns.map((item) => item.id), ["2026-09-24-confirmed-v2", "2026-09-24-confirmed"]);
   assert.ok(model.timeline.some((item) => item.title === "confirmed send" && item.detail === "Source-preserved event"));
 });
+test("only source-correlated receipts replace matching contact-date timeline rows without inflating legacy metrics", () => {
+ const model=buildCrmDashboard({leads:[lead({id:"receipt",firstContact:"2026-09-24",followUp:null,legacySnapshot:{status:"Contacted",firstContact:null}})],events:[{id:"gmail-message-1",leadId:"receipt",occurredAt:"2026-09-24T12:00:00Z",eventType:"gmail_sent",detail:{firstContactEventId:"first-receipt"}}],campaigns:[]});
+ assert.equal(model.metrics.receiptConfirmedSends,1);
+ assert.equal(model.metrics.explicitLegacySends,0);
+ assert.equal(model.metrics.inferredLegacyOutreach,0);
+ assert.deepEqual(model.timeline.map(x=>x.title),["Receipt-confirmed Gmail send"]);
+});
+test("an unrelated manual first-contact fact is retained beside a same-day receipt", () => {
+ const model=buildCrmDashboard({leads:[lead({id:"manual",firstContact:"2026-09-24",followUp:null,legacySnapshot:{status:"Contacted",firstContact:null}})],events:[{id:"gmail-message-2",leadId:"manual",occurredAt:"2026-09-24T12:00:00Z",eventType:"gmail_sent",detail:{sourceID:"gmail-message-2"}}],campaigns:[]});
+ assert.deepEqual(model.timeline.map(x=>x.title).sort(),["First contact recorded","Receipt-confirmed Gmail send"]);
+});
 
 test("outreach reconstruction deduplicates legacy note observations without treating due dates as sends", () => {
   const result = reconstructOutreach(lead({ id:"legacy", firstContact:"2026-09-10", legacySnapshot:{ notes:"2026-09-10 — Initial outreach confirmed sent\\n2026-09-10: Initial outreach confirmed sent\n2026-09-17 — First follow-up confirmed sent\n2026-09-30 — Follow-up due" } }));

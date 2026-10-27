@@ -18,6 +18,11 @@ const eventDetail = (value: unknown) => {
   const record = value as Record<string, unknown>;
   return typeof record.note === "string" ? record.note.slice(0, 180) : "Imported historical record";
 };
+const receiptCorrelatesToFirstContact=(event:OutreachEvent)=>{
+  if (event.eventType!=="gmail_sent" || !event.detail || typeof event.detail!=="object") return false;
+  const detail=event.detail as Record<string,unknown>;
+  return detail.firstContactEventId === `first-${event.leadId}` || detail.firstContactSourceId === event.id;
+};
 
 export function isSuppressed(lead: Lead) { return suppressed.has(lead.status); }
 export function hasCompletedSequence(lead: Lead) { return lead.nextStep === "Monitor for reply; no further automated outreach"; }
@@ -34,14 +39,18 @@ export function buildCrmDashboard(data: CrmDashboardData) {
   const onDeck = leads.filter((lead) => !isSuppressed(lead) && !lead.firstContact).sort((a, b) => b.score - a.score);
   const byId = new Map(leads.map((lead) => [lead.id, lead]));
   const reconstructed = leads.flatMap(reconstructOutreach);
+  const correlatedReceiptKeys=new Set(events.filter(event=>receiptCorrelatesToFirstContact(event)&&date(event.occurredAt)).map(event=>`${event.leadId}:${date(event.occurredAt)}`));
+  const receiptEvents=events.filter(event=>event.eventType==="gmail_sent"&&date(event.occurredAt));
+  const explicitLegacy=reconstructed.filter(event=>event.confidence==="explicit");
+  const inferredLegacy=reconstructed.filter(event=>event.confidence==="inferred");
   const timeline: DashboardEvent[] = [
-    ...firstContacts.map((lead) => ({ id: `first-${lead.id}`, leadId: lead.id, company: lead.company, date: lead.firstContact!, kind: "recorded" as const, title: "First contact recorded", detail: "Preserved source contact date" })),
+    ...firstContacts.filter(lead=>!correlatedReceiptKeys.has(`${lead.id}:${date(lead.firstContact)}`)).map((lead) => ({ id: `first-${lead.id}`, leadId: lead.id, company: lead.company, date: lead.firstContact!, kind: "recorded" as const, title: "First contact recorded", detail: "Preserved source contact date" })),
     ...scheduledFollowUps.map((lead) => ({ id: `due-${lead.id}`, leadId: lead.id, company: lead.company, date: lead.followUp!, kind: "due" as const, title: "Follow-up due", detail: lead.historyState === "clear" ? "Scheduled review date" : "Review history before outreach" })),
-    ...events.filter((event) => date(event.occurredAt)).map((event) => ({ id: `history-${event.id}`, leadId: event.leadId, company: byId.get(event.leadId)?.company ?? "Imported record", date: date(event.occurredAt)!, kind: "history" as const, title: event.eventType.replaceAll(/[_-]/g, " "), detail: eventDetail(event.detail) })),
+    ...events.filter((event) => date(event.occurredAt)).map((event) => ({ id: `history-${event.id}`, leadId: event.leadId, company: byId.get(event.leadId)?.company ?? "Imported record", date: date(event.occurredAt)!, kind: "history" as const, title:event.eventType==="gmail_sent"?"Receipt-confirmed Gmail send":event.eventType.replaceAll(/[_-]/g, " "), detail:event.eventType==="gmail_sent"?"Gmail receipt confirms sent; delivery is unknown.":eventDetail(event.detail) })),
     ...reconstructed.map((event) => ({ id:event.id, leadId:event.leadId, company:byId.get(event.leadId)?.company ?? "Imported record", date:event.date, kind:"history" as const, title:event.stage === "initial" ? "Initial outreach recorded" : event.stage === "first_followup" ? "First follow-up recorded" : "Final follow-up recorded", detail:event.confidence === "explicit" ? "Explicit legacy note" : "Recorded status/contact date (inferred)" })),
   ].sort((a, b) => b.date.localeCompare(a.date));
   return {
-    metrics: { total: leads.length, contacted: count("Contacted"), replied: count("Replied"), bounced: count("Bounced"), optedOut: count("Opted out"), research: count("Research"), protectedHistory, firstContacts: firstContacts.length, scheduledFollowUps: scheduledFollowUps.length, campaignMarkers: campaigns.length, reconstructedOutreach: reconstructed.length },
+    metrics: { total: leads.length, contacted: count("Contacted"), replied: count("Replied"), bounced: count("Bounced"), optedOut: count("Opted out"), research: count("Research"), protectedHistory, firstContacts: firstContacts.length, scheduledFollowUps: scheduledFollowUps.length, campaignMarkers: campaigns.length, reconstructedOutreach: reconstructed.length, receiptConfirmedSends:receiptEvents.length, explicitLegacySends:explicitLegacy.length, inferredLegacyOutreach:inferredLegacy.length },
     statusRows: ["Research", "Ready", "Contacted", "Replied", "Qualified", "Proposal", "Won", "Lost", "Bounced", "Opted out"].map((status) => ({ status, count: count(status as LeadStatus) })).filter((row) => row.count),
     dueQueue,
     onDeck,
