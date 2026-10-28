@@ -75,4 +75,6 @@ test("workspace reads back outcomes and offers a guarded new-draft reset", async
   assert.match(source,/work-outcomes\?leadId=/);
   assert.match(source,/Saved internal work outcomes/);
   assert.match(source,/Discard unsaved edits to this loaded draft/);
+  assert.match(source,/\[selected\?\.id\]/);
+  assert.match(source,/outcomeHistory\?\.leadId===selected\.id/);
 });
