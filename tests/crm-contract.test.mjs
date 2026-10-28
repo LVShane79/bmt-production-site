@@ -70,3 +70,9 @@ test("workflow versions advance even for multiple saves in one transaction", asy
   const source=await readFile("db/migrations/0002_crm_review_workflows.sql","utf8");
   assert.match(source,/updated_at=GREATEST\(clock_timestamp\(\), crm_campaign_drafts\.updated_at \+ interval '1 microsecond'\)/);
 });
+test("workspace reads back outcomes and offers a guarded new-draft reset", async () => {
+  const source=await readFile("app/admin/crm/workspace.tsx","utf8");
+  assert.match(source,/work-outcomes\?leadId=/);
+  assert.match(source,/Saved internal work outcomes/);
+  assert.match(source,/Discard unsaved edits to this loaded draft/);
+});
