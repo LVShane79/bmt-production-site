@@ -3,6 +3,7 @@ import test from "node:test";
 import { readFile } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
 import { freshnessFor, hiringSignalNotice, ntaState, syntheticEvidence, validateManualEvidence } from "../app/lib/research-foundation.ts";
+import { researchPanelView } from "../app/lib/research-panel-state.ts";
 
 test("manual evidence preserves provenance and rejects non-canonical source URLs",()=>{
  const good=validateManualEvidence({companyName:"Example Integrator",canonicalUrl:"https://example.test/jobs",publisher:"Example",excerpt:"Hiring AV engineers.",capacityHypothesis:"May be balancing delivery capacity; verify with owner.",signalType:"hiring",confidence:"medium",geography:"unknown"});
@@ -18,6 +19,12 @@ test("freshness and Nevada NTA review default safely",()=>{
 test("synthetic adapter is deterministic and labeled, never live research",()=>{
  const result=syntheticEvidence({companyName:"Fixture Co",canonicalUrl:"https://fixture.test/source"});
  assert.equal(result.publisher,"Synthetic test adapter"); assert.match(result.excerpt,/Synthetic fixture/);
+});
+test("research panel distinguishes loading, unavailable, empty, and recovered storage",()=>{
+ assert.deepEqual(researchPanelView("loading",0),{canWrite:false,showEmpty:false,showLoading:true,showUnavailable:false});
+ assert.deepEqual(researchPanelView("unavailable",0),{canWrite:false,showEmpty:false,showLoading:false,showUnavailable:true});
+ assert.deepEqual(researchPanelView("ready",0),{canWrite:true,showEmpty:true,showLoading:false,showUnavailable:false});
+ assert.deepEqual(researchPanelView("ready",1),{canWrite:true,showEmpty:false,showLoading:false,showUnavailable:false});
 });
 test("research migration is additive, preserves campaign evidence snapshots, and APIs are owner-gated",async()=>{
  const [migration,route,linkRoute]=await Promise.all([readFile("db/migrations/0004_research_campaign_foundation.sql","utf8"),readFile("app/api/admin/crm/research-evidence/route.ts","utf8"),readFile("app/api/admin/crm/campaign-evidence/route.ts","utf8")]);
@@ -39,4 +46,4 @@ test("source payload and campaign provenance snapshots cannot be edited or delet
  await db.exec("UPDATE crm_research_evidence SET owner_review_state='accepted' WHERE id='e'");
  await assert.rejects(db.exec("UPDATE crm_research_evidence SET excerpt='Changed' WHERE id='e'")); await assert.rejects(db.exec("DELETE FROM crm_campaign_evidence_versions WHERE draft_id='d'")); await db.close();
 });
-test("research screen exposes owner-reviewed evidence and disabled live-AI state",async()=>{const source=await readFile("app/admin/crm/research-panel.tsx","utf8");assert.match(source,/Disabled — configuration required/);assert.match(source,/Save for owner review/);assert.match(source,/Accept evidence/);assert.match(source,/canonical_url/);});
+test("research screen disables writes when storage is unavailable and supports retry recovery",async()=>{const [source,link]=await Promise.all([readFile("app/admin/crm/research-panel.tsx","utf8"),readFile("app/admin/crm/campaign-evidence-link.tsx","utf8")]);assert.match(source,/Disabled — configuration required/);assert.match(source,/Retry research storage/);assert.match(source,/fieldset disabled=\{!view\.canWrite\}/);assert.match(source,/view\.showEmpty&&/);assert.match(source,/disabled=\{!view\.canWrite\}/);assert.match(link,/researchReady/);assert.match(link,/disabled=\{!researchReady/);});
