@@ -79,4 +79,6 @@ test("workspace reads back outcomes and offers a guarded new-draft reset", async
   assert.match(source,/outcomeHistory\?\.leadId===selected\.id/);
   assert.match(source,/outcomeRequest=useRef\(0\)/);
   assert.match(source,/request===outcomeRequest\.current/);
+  assert.match(source,/return\(\)=>\{outcomeRequest\.current\+\+;\}/);
+  assert.match(source,/activeOutcomeLeadId\.current===leadId/);
 });
