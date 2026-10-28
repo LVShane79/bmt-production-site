@@ -11,6 +11,8 @@ export type CrmBackupTable = (typeof crmBackupTables)[number];
 export type BackupTrigger = "daily" | "pre_campaign" | "manual";
 export type BackupState = "running" | "succeeded" | "failed";
 export type SqlClient = { query<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T[]> };
+export type SqlStatement = { sql: string; params: unknown[] };
+export type TransactionalSqlClient = SqlClient & { transaction(statements: SqlStatement[]): Promise<unknown> };
 export type BackupManifest = {
   format: "bmt-crm-logical-backup/v1"; capturedAt: string; sourceCommit: string; schemaVersion: string;
   runId: string; tables: Record<CrmBackupTable, { count: number; sha256: string }>; payloadSha256: string;
@@ -18,7 +20,7 @@ export type BackupManifest = {
 export type LogicalBackup = { manifest: BackupManifest; data: Record<CrmBackupTable, Record<string, unknown>[]> };
 export type BackupDestination = { name: string; upload(input: { runId: string; manifest: BackupManifest; payload: string }): Promise<{ sha256: string }> };
 
-const canonical = (value: unknown): string => {
+export const canonical = (value: unknown): string => {
   if (value === null || typeof value !== "object") return JSON.stringify(value);
   if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
   const record = value as Record<string, unknown>;
@@ -50,12 +52,19 @@ export function validateLogicalBackup(backup: LogicalBackup): boolean {
 }
 
 /** Explicit restore helper for an already-empty reviewed target. It never contacts a provider. */
-export async function restoreCrmLogicalBackup(sql: SqlClient, backup: LogicalBackup): Promise<void> {
+export async function restoreCrmLogicalBackup(sql: TransactionalSqlClient, backup: LogicalBackup): Promise<void> {
   if (!validateLogicalBackup(backup)) throw new Error("CRM restore blocked: invalid or unrecognized backup manifest");
+  const known = crmBackupTables.map(table => `'${table}'`).join(",");
+  const nonempty = crmBackupTables.map(table => `SELECT '${table}' AS table_name WHERE EXISTS (SELECT 1 FROM ${quote(table)})`).join(" UNION ALL ");
+  const preflight = (await sql.query<{ missing_tables: string[]; nonempty_tables: string[]; unknown_tables: string[] }>(`SELECT COALESCE((SELECT jsonb_agg(expected.table_name ORDER BY expected.table_name) FROM (VALUES ${crmBackupTables.map(table => `('${table}')`).join(",")}) AS expected(table_name) LEFT JOIN information_schema.tables actual ON actual.table_schema='public' AND actual.table_name=expected.table_name WHERE actual.table_name IS NULL),'[]'::jsonb) AS missing_tables,COALESCE((SELECT jsonb_agg(table_name ORDER BY table_name) FROM (${nonempty}) AS occupied),'[]'::jsonb) AS nonempty_tables,COALESCE((SELECT jsonb_agg(table_name ORDER BY table_name) FROM information_schema.tables WHERE table_schema='public' AND table_name LIKE 'crm_%' AND table_name <> 'crm_backup_runs' AND table_name NOT IN (${known})),'[]'::jsonb) AS unknown_tables`))[0];
+  if (!preflight || preflight.missing_tables?.length || preflight.unknown_tables?.length) throw new Error("CRM restore blocked: target schema is incompatible");
+  if (preflight.nonempty_tables?.length) throw new Error(`CRM restore blocked: target contains CRM data (${preflight.nonempty_tables.join(",")})`);
+  const statements: SqlStatement[] = [];
   for (const table of crmBackupTables) for (const row of backup.data[table]) {
     const keys = Object.keys(row); if (!keys.length) continue;
-    await sql.query(`INSERT INTO ${quote(table)} (${keys.map(quote).join(",")}) VALUES (${keys.map((_, index) => `$${index + 1}`).join(",")})`, keys.map(key => row[key]));
+    statements.push({ sql: `INSERT INTO ${quote(table)} (${keys.map(quote).join(",")}) VALUES (${keys.map((_, index) => `$${index + 1}`).join(",")})`, params: keys.map(key => row[key]) });
   }
+  await sql.transaction(statements);
 }
 
 export async function runBackup(sql: SqlClient, destination: BackupDestination, trigger: BackupTrigger, options: Parameters<typeof exportCrmLogicalBackup>[1] = {}): Promise<LogicalBackup> {
