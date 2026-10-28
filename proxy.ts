@@ -5,5 +5,9 @@ import { clerkMiddleware } from "@clerk/nextjs/server";
 export default clerkMiddleware();
 
 export const config = {
-  matcher: ["/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|png|jpg|jpeg|gif|svg|ico|woff2?|ttf|map)).*)", "/(api|trpc)(.*)"],
+  // Public pages and public utility APIs do not need a Clerk request context.
+  // Keeping the middleware on the private surface avoids making keyless build
+  // and smoke-test environments fail while routes remain fail-closed via
+  // ownerOrUnauthorized().
+  matcher: ["/admin/:path*", "/api/admin/:path*"],
 };

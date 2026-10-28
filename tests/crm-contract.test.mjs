@@ -49,6 +49,15 @@ test("Clerk auth completion is pinned to the private admin route", async () => {
     assert.doesNotMatch(source, /redirectUrl=|afterSign(?:In|Up)Url=/);
   }
 });
+test("Clerk request context is limited to private admin routes", async () => {
+  const source = await readFile("proxy.ts", "utf8");
+  assert.match(source, /"\/admin\/:path\*"/);
+  assert.match(source, /"\/api\/admin\/:path\*"/);
+  assert.doesNotMatch(source, /"\/\(\(\?!_next/);
+  const auth = await readFile("app/lib/admin-auth.ts", "utf8");
+  assert.match(auth, /ownerOrUnauthorized/);
+  assert.match(auth, /isConfiguredOwner/);
+});
 test("transaction import is idempotent by stable source IDs", () => {
   const sourceIds = new Set(); const importOne = (id) => !sourceIds.has(id) && (sourceIds.add(id), true);
   assert.equal(importOne("lead-1"), true); assert.equal(importOne("lead-1"), false);
@@ -79,6 +88,6 @@ test("workspace reads back outcomes and offers a guarded new-draft reset", async
   assert.match(source,/outcomeHistory\?\.leadId===selected\.id/);
   assert.match(source,/outcomeRequest=useRef\(0\)/);
   assert.match(source,/request===outcomeRequest\.current/);
-  assert.match(source,/if\(outcomeRequest\.current===request\)outcomeRequest\.current\+\+;/);
+  assert.match(source,/if\(requestRef\.current===request\)requestRef\.current\+\+;/);
   assert.match(source,/activeOutcomeLeadId\.current===leadId/);
 });
