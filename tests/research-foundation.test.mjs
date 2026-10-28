@@ -13,7 +13,7 @@ test("manual evidence preserves provenance and rejects non-canonical source URLs
 test("freshness and Nevada NTA review default safely",()=>{
  assert.equal(freshnessFor("2026-10-27T00:00:00.000Z",new Date("2026-10-28T00:00:00.000Z")),"fresh");
  assert.equal(freshnessFor("2026-06-01T00:00:00.000Z",new Date("2026-10-28T00:00:00.000Z")),"stale");
- assert.equal(ntaState("unknown"),"unresolved"); assert.equal(ntaState("nevada"),"unresolved"); assert.equal(ntaState("non_nevada"),"not_applicable");
+ assert.equal(ntaState("unknown"),"unresolved"); assert.equal(ntaState("nevada"),"hold"); assert.equal(ntaState("non_nevada"),"not_applicable");
 });
 test("synthetic adapter is deterministic and labeled, never live research",()=>{
  const result=syntheticEvidence({companyName:"Fixture Co",canonicalUrl:"https://fixture.test/source"});
@@ -21,9 +21,9 @@ test("synthetic adapter is deterministic and labeled, never live research",()=>{
 });
 test("research migration is additive, preserves campaign evidence snapshots, and APIs are owner-gated",async()=>{
  const [migration,route,linkRoute]=await Promise.all([readFile("db/migrations/0004_research_campaign_foundation.sql","utf8"),readFile("app/api/admin/crm/research-evidence/route.ts","utf8"),readFile("app/api/admin/crm/campaign-evidence/route.ts","utf8")]);
- assert.match(migration,/CREATE TABLE IF NOT EXISTS crm_research_evidence/); assert.match(migration,/crm_campaign_evidence_versions/); assert.doesNotMatch(migration,/ALTER TABLE crm_leads/);
- assert.match(route,/ownerOrUnauthorized/); assert.match(route,/normalized_company/); assert.doesNotMatch(route,/fetch\(|openai|sendMail|gmail/i);
- assert.match(linkRoute,/ownerOrUnauthorized/); assert.match(linkRoute,/owner_review_state='accepted'/); assert.doesNotMatch(linkRoute,/sendMail|gmail|nodemailer/i);
+ assert.match(migration,/CREATE TABLE IF NOT EXISTS crm_research_evidence/); assert.match(migration,/message_subject text NOT NULL/); assert.match(migration,/message_body text NOT NULL/); assert.match(migration,/crm_campaign_evidence_versions/); assert.doesNotMatch(migration,/ALTER TABLE crm_leads/);
+ assert.match(route,/ownerOrUnauthorized/); assert.match(route,/normalized_company/); assert.doesNotMatch(route,/UPDATE crm_leads|INSERT INTO crm_leads|fetch\(|openai|sendMail|gmail/i);
+ assert.match(linkRoute,/ownerOrUnauthorized/); assert.match(linkRoute,/owner_review_state='accepted'/); assert.match(linkRoute,/message_subject,message_body/); assert.doesNotMatch(linkRoute,/sendMail|gmail|nodemailer/i);
 });
 test("research migration executes with isolated prerequisites and leaves CRM leads untouched",async()=>{
  const db=new PGlite(); const migration=await readFile("db/migrations/0004_research_campaign_foundation.sql","utf8");
@@ -35,7 +35,7 @@ test("research migration executes with isolated prerequisites and leaves CRM lea
 });
 test("source payload and campaign provenance snapshots cannot be edited or deleted",async()=>{
  const db=new PGlite(); const migration=await readFile("db/migrations/0004_research_campaign_foundation.sql","utf8"); await db.exec("CREATE TABLE crm_leads (id text PRIMARY KEY, normalized_company text UNIQUE); CREATE TABLE crm_campaign_drafts (id text PRIMARY KEY);"); await db.exec(migration);
- await db.exec("INSERT INTO crm_research_companies (id,company_name,normalized_company,created_by) VALUES ('c','C','c','o'); INSERT INTO crm_research_evidence (id,company_id,canonical_url,publisher,excerpt,fetched_at,confidence,freshness,signal_type,capacity_hypothesis,created_by) VALUES ('e','c','https://x.test','X','Original','2026-10-28','low','fresh','other','Review','o'); INSERT INTO crm_campaign_drafts VALUES ('d'); INSERT INTO crm_campaign_evidence_versions (draft_id,evidence_id,evidence_version,message_version,linked_by) VALUES ('d','e',1,'v1','o');");
+ await db.exec("INSERT INTO crm_research_companies (id,company_name,normalized_company,created_by) VALUES ('c','C','c','o'); INSERT INTO crm_research_evidence (id,company_id,canonical_url,publisher,excerpt,fetched_at,confidence,freshness,signal_type,capacity_hypothesis,created_by) VALUES ('e','c','https://x.test','X','Original','2026-10-28','low','fresh','other','Review','o'); INSERT INTO crm_campaign_drafts VALUES ('d'); INSERT INTO crm_campaign_evidence_versions (draft_id,evidence_id,evidence_version,message_version,message_subject,message_body,linked_by) VALUES ('d','e',1,'v1','Subject snapshot','Body snapshot','o');");
  await db.exec("UPDATE crm_research_evidence SET owner_review_state='accepted' WHERE id='e'");
  await assert.rejects(db.exec("UPDATE crm_research_evidence SET excerpt='Changed' WHERE id='e'")); await assert.rejects(db.exec("DELETE FROM crm_campaign_evidence_versions WHERE draft_id='d'")); await db.close();
 });

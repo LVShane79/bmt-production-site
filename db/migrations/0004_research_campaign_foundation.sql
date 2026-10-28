@@ -49,6 +49,8 @@ CREATE TABLE IF NOT EXISTS crm_campaign_evidence_versions (
   evidence_id text NOT NULL REFERENCES crm_research_evidence(id),
   evidence_version integer NOT NULL,
   message_version text NOT NULL,
+  message_subject text NOT NULL,
+  message_body text NOT NULL,
   linked_by text NOT NULL,
   linked_at timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY (draft_id, evidence_id, evidence_version, message_version)

@@ -3,9 +3,10 @@ import { createHash, randomUUID } from "node:crypto";
 export const crmBackupTables = [
   "crm_leads", "crm_outreach_history", "crm_campaign_imports", "crm_campaign_drafts",
   "crm_campaign_recipients", "crm_work_outcomes",
+  "crm_research_cohorts", "crm_research_companies", "crm_research_evidence", "crm_campaign_evidence_versions",
 ] as const;
 /** Bump this deliberately when a migration adds CRM data that must enter exports. */
-export const crmBackupSchemaVersion = "crm-data-tables/v1";
+export const crmBackupSchemaVersion = "crm-data-tables/v2";
 export type CrmBackupTable = (typeof crmBackupTables)[number];
 export type BackupTrigger = "daily" | "pre_campaign" | "manual";
 export type BackupState = "running" | "succeeded" | "failed";
@@ -42,8 +43,19 @@ export async function exportCrmLogicalBackup(sql: SqlClient, options: { runId?: 
 
 export function serializeLogicalBackup(backup: LogicalBackup): string { return canonical({ manifest: backup.manifest, data: backup.data }); }
 export function validateLogicalBackup(backup: LogicalBackup): boolean {
-  if (backup.manifest.format !== "bmt-crm-logical-backup/v1" || backup.manifest.payloadSha256 !== sha256(canonical(backup.data))) return false;
+  if (backup.manifest.format !== "bmt-crm-logical-backup/v1" || backup.manifest.schemaVersion !== crmBackupSchemaVersion || backup.manifest.payloadSha256 !== sha256(canonical(backup.data))) return false;
+  const expected = new Set(crmBackupTables); const actual = Object.keys(backup.data);
+  if (actual.length !== expected.size || actual.some(table => !expected.has(table as CrmBackupTable))) return false;
   return crmBackupTables.every(table => backup.manifest.tables[table]?.count === backup.data[table]?.length && backup.manifest.tables[table]?.sha256 === sha256(canonical(backup.data[table])));
+}
+
+/** Explicit restore helper for an already-empty reviewed target. It never contacts a provider. */
+export async function restoreCrmLogicalBackup(sql: SqlClient, backup: LogicalBackup): Promise<void> {
+  if (!validateLogicalBackup(backup)) throw new Error("CRM restore blocked: invalid or unrecognized backup manifest");
+  for (const table of crmBackupTables) for (const row of backup.data[table]) {
+    const keys = Object.keys(row); if (!keys.length) continue;
+    await sql.query(`INSERT INTO ${quote(table)} (${keys.map(quote).join(",")}) VALUES (${keys.map((_, index) => `$${index + 1}`).join(",")})`, keys.map(key => row[key]));
+  }
 }
 
 export async function runBackup(sql: SqlClient, destination: BackupDestination, trigger: BackupTrigger, options: Parameters<typeof exportCrmLogicalBackup>[1] = {}): Promise<LogicalBackup> {
