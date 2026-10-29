@@ -38,3 +38,8 @@ test("polar-pattern SVG paths are local to their translated panels", () => {
   assert.doesNotMatch(graphic, /title:"Figure eight", d:"M560/);
   assert.match(graphic, /transform={`translate\(\$\{x\} 0\)`}/);
 });
+test("waveform labels occupy the gaps between their traces", () => {
+  const graphic = readFileSync("app/learn/audio/AudioGraphic.tsx", "utf8");
+  assert.match(graphic, /\["100 Hz · larger amplitude",185,62,2,119\]/);
+  assert.match(graphic, /\["200 Hz · higher frequency",295,32,4,260\]/);
+});
