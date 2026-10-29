@@ -33,9 +33,7 @@ Understand the acoustic event before assuming an equipment setting is responsibl
 A waveform plots a changing quantity against time. For airborne sound, the vertical axis can represent pressure variation above and below the surrounding air pressure. The horizontal axis represents time. The center line represents the reference around which sound-pressure changes occur—not an absence of air pressure. Positive and negative parts show the direction of variation relative to that reference.
 
 A sine wave is a smooth, repeating shape associated with one frequency. Speech rarely looks so simple, but this model makes the vocabulary clear.` },
-      { graphic: "waveform", markdown: `Same time window in all three plots. Taller waves mean greater pressure amplitude; more cycles mean higher frequency.
-
-## Frequency, period, and wavelength
+      { graphic: "waveform", markdown: `## Frequency, period, and wavelength
 
 Frequency is the number of complete cycles occurring each second. Its unit is the hertz, abbreviated Hz. A 100 Hz tone completes 100 cycles each second; a 1,000 Hz tone completes 1,000. For simple tones, higher frequency generally means higher perceived pitch.
 
@@ -111,9 +109,7 @@ Reflected paths are longer, so their sound arrives later. Surfaces also change t
 Early reflections arrive soon after the direct sound. Later reflections become more numerous and overlap. Timing, strength, direction, and frequency content affect what we hear. Some reflections support audibility; others obscure speech or create unwanted coloration.
 
 Room behavior changes with frequency. A surface absorbing high-frequency energy may absorb very little low-frequency energy. “Soft” is not a complete acoustic specification.` },
-      { graphic: "room", markdown: `One sound reaches the microphone along several paths. This simplified top view shows only one reflection; a real room has many.
-
-## Reflection, absorption, and diffusion
+      { graphic: "room", markdown: `## Reflection, absorption, and diffusion
 
 Reflection sends sound energy back into the room. A large, smooth surface can produce a strong reflection in a particular direction.
 
@@ -239,9 +235,7 @@ A polar pattern describes relative sensitivity to sound arriving from different 
 - **Figure-eight:** sensitive to front and rear, with reduced response at the sides.
 
 Actual patterns vary with frequency; manufacturers may show several traces. Strong rejection in one direction at one frequency may weaken at another. Off-axis sound may also have a different tonal balance.` },
-      { graphic: "polar", markdown: `Idealized relative pickup shapes, not measured product plots. Front is at the top. Real patterns vary with frequency and microphone design.
-
-The intended “front” may face out of the end or side. Grille appearance alone does not reliably identify the speaking direction. [\[3.3\]](https://www.shure.com/en-US/insights/microphone-directionality-polar-pattern-basics)
+      { graphic: "polar", markdown: `The intended “front” may face out of the end or side. Grille appearance alone does not reliably identify the speaking direction. [\[3.3\]](https://www.shure.com/en-US/insights/microphone-directionality-polar-pattern-basics)
 
 ## Placement and proximity effect
 

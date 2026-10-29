@@ -12,7 +12,8 @@ export type SearchLesson = {
 
 function excerpt(text: string, query: string) {
   const normalized = text.replace(/\s+/g, " ").trim();
-  const position = normalized.toLocaleLowerCase().indexOf(query.toLocaleLowerCase());
+  const searchableTerm = normalizedSearchText(query).split(" ")[0] || query.toLocaleLowerCase();
+  const position = normalized.toLocaleLowerCase().indexOf(searchableTerm);
   if (position < 0) return normalized.slice(0, 185) + (normalized.length > 185 ? "…" : "");
   const start = Math.max(0, position - 72);
   const end = Math.min(normalized.length, position + query.length + 118);
