@@ -1546,6 +1546,20 @@ footer div a { font-size: 13px; }
 
 .lesson-markdown ul { list-style: disc; }
 .lesson-markdown ol { list-style: decimal; }
+.audio-card-number { align-items: center; background: #122b2c; color: var(--bmt-teal); display: flex; font: 700 42px "SFMono-Regular", Consolas, monospace; justify-content: center; min-height: 190px; }
+.audio-graphic { background: #122426; border: 1px solid rgba(0,170,168,.28); color: #eaf4ef; margin: 2.2rem 0; overflow: hidden; padding: 18px; }
+.audio-graphic svg { display: block; height: auto; margin: auto; max-width: 700px; width: 100%; }
+.audio-graphic figcaption { color: rgba(234,244,239,.8); font-size: .88rem; line-height: 1.5; margin: 10px auto 0; max-width: 700px; }
+.audio-axis, .audio-label, .audio-small { fill: #dce9e5; font-family: "SFMono-Regular", Consolas, monospace; font-size: 12px; letter-spacing: .06em; }
+.audio-axis { fill: #91a5a0; font-size: 10px; transform: rotate(-90deg); transform-origin: 18px 205px; }
+.audio-small { fill: #9eb5ae; font-size: 9px; }
+.audio-grid { fill: none; stroke: #55706d; stroke-width: 1; }
+.audio-wave { fill: none; stroke: #00aaa8; stroke-width: 3; }
+.audio-room { fill: #152d2e; stroke: #a4b3af; stroke-width: 2; }
+.audio-dot { fill: #00aaa8; }
+.audio-direct { fill: none; stroke: #00aaa8; stroke-width: 4; }
+.audio-reflect { fill: none; stroke: #788587; stroke-dasharray: 8 7; stroke-width: 3; }
+.audio-polar { fill: rgba(0,170,168,.16); stroke: #00aaa8; stroke-width: 3; }
 
 /* Private CRM command center. Scoped so the public site keeps its existing layout. */
 .crm-shell { max-width: 1420px; padding-bottom: 96px; }

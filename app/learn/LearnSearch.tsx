@@ -19,13 +19,17 @@ function excerpt(text: string, query: string) {
   return (start > 0 ? "…" : "") + normalized.slice(start, end) + (end < normalized.length ? "…" : "");
 }
 
+function normalizedSearchText(value: string) {
+  return value.toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+}
+
 export function LearnSearch({ lessons }: { lessons: SearchLesson[] }) {
   const [query, setQuery] = useState("");
   const inputId = useId();
   const results = useMemo(() => {
-    const term = query.trim().toLocaleLowerCase();
+    const term = normalizedSearchText(query);
     if (!term) return [];
-    return lessons.filter((lesson) => `${lesson.course} ${lesson.title} ${lesson.text}`.toLocaleLowerCase().includes(term));
+    return lessons.filter((lesson) => normalizedSearchText(`${lesson.course} ${lesson.title} ${lesson.text}`).includes(term));
   }, [lessons, query]);
 
   return (

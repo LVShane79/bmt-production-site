@@ -3,6 +3,7 @@ import Link from "next/link";
 import { SiteFooter, SiteHeader } from "../components/SiteShell";
 import { LearnSearch, type SearchLesson } from "./LearnSearch";
 import { lessons as itLessons } from "./it-for-av/lessons";
+import { audioLessons } from "./audio/lessons";
 
 export const metadata: Metadata = {
   title: "Learn — Practical AV Courses",
@@ -22,11 +23,16 @@ const searchLessons: SearchLesson[] = itLessons.map((lesson) => ({
   title: lesson.title,
   href: `/learn/it-for-av/${lesson.slug}`,
   text: lessonText(lesson),
-}));
+})).concat(audioLessons.map((lesson) => ({
+  course: "Audio for AV",
+  title: lesson.title,
+  href: `/learn/audio/${lesson.slug}`,
+  text: `${lesson.objectives.join(" ")} ${lesson.parts.map((part) => part.markdown).join(" ")}`,
+})));
 
 const courses = [
   { number: "01", title: "IT for AV", description: "Networking, security, multicast, timing, and practical AV-over-IP engineering.", count: `${itLessons.length} lessons`, href: "/learn/it-for-av", action: "Explore IT for AV" },
-  { number: "02", title: "Audio", description: "Sound fundamentals, rooms, microphones, gain structure, and DSP—built from first principles.", count: "Lessons in editorial review", href: "#audio", action: "Audio is next", coming: true },
+  { number: "02", title: "Audio", description: "Sound fundamentals, rooms, microphones, gain structure, and DSP—built from first principles.", count: `${audioLessons.length} lessons`, href: "/learn/audio", action: "Explore Audio" },
   { number: "03", title: "Video", description: "Signal paths, display systems, transport, and the practical details behind dependable video.", count: "Coming soon", href: "#video", action: "On the roadmap", coming: true },
   { number: "04", title: "Control", description: "How control systems, interfaces, logic, and integration boundaries fit together.", count: "Coming soon", href: "#control", action: "On the roadmap", coming: true },
 ];
