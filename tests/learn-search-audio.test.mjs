@@ -28,7 +28,10 @@ test("audio publication retains the complete lesson series and original referenc
 });
 test("polar-pattern SVG paths are local to their translated panels", () => {
   const graphic = readFileSync("app/learn/audio/AudioGraphic.tsx", "utf8");
-  assert.match(graphic, /title:"Cardioid", d:"M115 190/);
+  assert.match(graphic, /const radius = 70 \* \(1 \+ Math\.cos\(theta\)\)/);
+  assert.match(graphic, /const x = 115 \+ radius \* Math\.sin\(theta\)/);
+  assert.match(graphic, /const y = 190 - radius \* Math\.cos\(theta\)/);
+  assert.match(graphic, /title:"Cardioid", d:cardioidPath/);
   assert.match(graphic, /title:"Figure eight", d:"M115 190/);
   assert.match(graphic, /title:"Omnidirectional", d:"M115 125/);
   assert.doesNotMatch(graphic, /title:"Cardioid", d:"M320/);
