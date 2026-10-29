@@ -7,6 +7,7 @@ const staticPages = [
   { path: "/", lastModified: "2026-07-24", changeFrequency: "monthly" as const, priority: 1 },
   { path: "/contact", lastModified: "2026-07-21", changeFrequency: "monthly" as const, priority: 0.8 },
   { path: "/insights", lastModified: "2026-09-16", changeFrequency: "weekly" as const, priority: 0.9 },
+  { path: "/learn", lastModified: "2026-10-29", changeFrequency: "weekly" as const, priority: 0.9 },
   { path: "/learn/it-for-av/guides/snmp-lab", lastModified: "2026-10-21", changeFrequency: "monthly" as const, priority: 0.7 },
   { path: "/learn/it-for-av", lastModified: "2026-10-23", changeFrequency: "daily" as const, priority: 0.9 },
   { path: "/resources", lastModified: "2026-07-24", changeFrequency: "weekly" as const, priority: 0.9 },

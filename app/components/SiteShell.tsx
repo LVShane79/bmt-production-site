@@ -18,7 +18,7 @@ export function SiteHeader({ light = false }: { light?: boolean }) {
         <a href="/#services">Services</a>
         <a href="/#approach">Approach</a>
         <a href="/insights">Insights</a>
-        <a href="/learn/it-for-av">Learn</a>
+        <a href="/learn">Learn</a>
         <a href="/resources">Resources</a>
       </nav>
       <a className="header-cta" href="/contact">Discuss a project <ArrowIcon /></a>
