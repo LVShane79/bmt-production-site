@@ -3,7 +3,7 @@ import test from "node:test";
 import { readFile } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
 import { freshnessFor, hiringSignalNotice, ntaState, syntheticEvidence, validateManualEvidence } from "../app/lib/research-foundation.ts";
-import { companyHoldReasons, validateCompanyReview } from "../app/lib/company-review.ts";
+import { companyHoldReasons, companyReviewWrite, validateCompanyReview } from "../app/lib/company-review.ts";
 import { researchPanelView } from "../app/lib/research-panel-state.ts";
 
 test("manual evidence preserves provenance and rejects non-canonical source URLs",()=>{
@@ -61,14 +61,27 @@ test("owner company review only permits explicit non-Nevada or Nevada clearance 
 test("company-review migration rejects bypasses and retains auditable decisions",async()=>{
  const db=new PGlite();for(const file of ["0004_research_campaign_foundation.sql","0005_company_review_controls.sql"]){if(file.startsWith("0004"))await db.exec("CREATE TABLE crm_leads (id text PRIMARY KEY, normalized_company text UNIQUE); CREATE TABLE crm_campaign_drafts (id text PRIMARY KEY);");await db.exec(await readFile(`db/migrations/${file}`,"utf8"));}
  await db.exec("INSERT INTO crm_research_companies (id,company_name,normalized_company,created_by) VALUES ('c','Fixture','fixture','owner')");
+ await assert.rejects(db.exec("INSERT INTO crm_research_company_reviews (id,company_id,expected_version,geography,geography_status,nta_review_state,review_state,rationale,reviewed_by) VALUES ('bad-audit','c','v0','Unknown','unknown','not_applicable','rejected','bad audit decision','owner')"));
  await assert.rejects(db.exec("UPDATE crm_research_companies SET geography='Unknown',geography_status='unknown',nta_review_state='not_applicable',review_state='owner_review',review_rationale='bad',reviewed_by='owner',reviewed_at=now() WHERE id='c'"));
  await assert.rejects(db.exec("UPDATE crm_research_companies SET geography='Reno',geography_status='nevada',nta_review_state='hold',review_state='owner_review',review_rationale='bad',reviewed_by='owner',reviewed_at=now() WHERE id='c'"));
  await db.exec("UPDATE crm_research_companies SET geography='Reno, Nevada',geography_status='nevada',nta_review_state='cleared',review_state='owner_review',review_rationale='Reviewed NTA clearance',reviewed_by='owner',reviewed_at=now() WHERE id='c'; INSERT INTO crm_research_company_reviews (id,company_id,expected_version,geography,geography_status,nta_review_state,review_state,rationale,reviewed_by) VALUES ('audit','c','old','Reno, Nevada','nevada','cleared','owner_review','Reviewed NTA clearance','owner')");
  assert.equal((await db.query("SELECT count(*)::int AS count FROM crm_research_company_reviews WHERE company_id='c'")).rows[0].count,1);await db.close();
 });
+test("executed company-review write is atomic, concurrency-safe, and preserves immutable audit history",async()=>{
+ const db=new PGlite();await db.exec("CREATE TABLE crm_leads (id text PRIMARY KEY, normalized_company text UNIQUE); CREATE TABLE crm_campaign_drafts (id text PRIMARY KEY);");for(const file of ["0004_research_campaign_foundation.sql","0005_company_review_controls.sql"])await db.exec(await readFile(`db/migrations/${file}`,"utf8"));
+ await db.exec("INSERT INTO crm_research_companies (id,company_name,normalized_company,created_by) VALUES ('c','Fixture','fixture','owner')");
+ const version=(await db.query("SELECT floor(extract(epoch FROM updated_at)*1000000)::bigint::text AS version FROM crm_research_companies WHERE id='c'")).rows[0].version;
+ const review=validateCompanyReview({id:"c",expectedVersion:version,geography:"Reno, Nevada",geographyStatus:"nevada",ntaReviewState:"cleared",reviewState:"owner_review",rationale:"Owner cleared the Nevada NTA review."});assert.ok(review);
+ const first=companyReviewWrite(review,"owner","audit-1"),winner=await db.query(first.sql,first.params);assert.equal(winner.rows.length,1);
+ const stale=await db.query(companyReviewWrite(review,"owner","audit-stale").sql,companyReviewWrite(review,"owner","audit-stale").params);assert.equal(stale.rows.length,0);assert.equal((await db.query("SELECT count(*)::int AS count FROM crm_research_company_reviews WHERE company_id='c'")).rows[0].count,1);
+ const current=(await db.query("SELECT floor(extract(epoch FROM updated_at)*1000000)::bigint::text AS version,review_rationale FROM crm_research_companies WHERE id='c'")).rows[0];
+ const collision={...review,expectedVersion:current.version,rationale:"This update must roll back when the audit ID collides."};const failed=companyReviewWrite(collision,"owner","audit-1");await assert.rejects(db.query(failed.sql,failed.params));
+ const after=(await db.query("SELECT review_rationale FROM crm_research_companies WHERE id='c'")).rows[0];assert.equal(after.review_rationale,current.review_rationale);assert.equal((await db.query("SELECT count(*)::int AS count FROM crm_research_company_reviews WHERE company_id='c'")).rows[0].count,1);
+ await assert.rejects(db.exec("UPDATE crm_research_company_reviews SET rationale='rewrite' WHERE id='audit-1'"));await assert.rejects(db.exec("DELETE FROM crm_research_company_reviews WHERE id='audit-1'"));await assert.rejects(db.exec("DELETE FROM crm_research_companies WHERE id='c'"));assert.equal((await db.query("SELECT count(*)::int AS count FROM crm_research_company_reviews WHERE id='audit-1'")).rows[0].count,1);await db.close();
+});
 test("company review endpoint is owner-gated, concurrency-protected, and UI keeps clearance separate",async()=>{
  const [route,ui,migration]=await Promise.all([readFile("app/api/admin/crm/company-review/route.ts","utf8"),readFile("app/admin/crm/research-panel.tsx","utf8"),readFile("db/migrations/0005_company_review_controls.sql","utf8")]);
- assert.match(route,/ownerOrUnauthorized/);assert.match(route,/updated_at\)\*1000000/);assert.match(route,/crm_research_company_reviews/);assert.match(route,/crypto\.randomUUID/);assert.doesNotMatch(route,/crm_leads|crm_campaign_recipients|sendMail|nodemailer/i);
+ assert.match(route,/ownerOrUnauthorized/);assert.match(route,/companyReviewWrite/);assert.match(route,/crypto\.randomUUID/);assert.doesNotMatch(route,/crm_leads|crm_campaign_recipients|sendMail|nodemailer/i);
  assert.match(ui,/Owner company review/);assert.match(ui,/Separate from evidence acceptance/);assert.match(ui,/Record owner company review/);assert.match(ui,/NTA decision/);assert.match(ui,/companyHoldReasons/);
  assert.match(migration,/ADD COLUMN IF NOT EXISTS review_rationale/);assert.match(migration,/crm_research_company_reviews/);assert.match(migration,/unknown or Nevada geography cannot be not_applicable/);assert.doesNotMatch(migration,/ALTER TABLE crm_leads/);
 });

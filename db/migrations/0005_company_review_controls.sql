@@ -6,7 +6,7 @@ ALTER TABLE crm_research_companies ADD COLUMN IF NOT EXISTS reviewed_at timestam
 
 CREATE TABLE IF NOT EXISTS crm_research_company_reviews (
   id text PRIMARY KEY,
-  company_id text NOT NULL REFERENCES crm_research_companies(id) ON DELETE CASCADE,
+  company_id text NOT NULL REFERENCES crm_research_companies(id) ON DELETE RESTRICT,
   expected_version text NOT NULL,
   geography text NOT NULL,
   geography_status text NOT NULL CHECK (geography_status IN ('unknown','nevada','non_nevada')),
@@ -17,6 +17,28 @@ CREATE TABLE IF NOT EXISTS crm_research_company_reviews (
   reviewed_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS crm_research_company_reviews_company_idx ON crm_research_company_reviews (company_id, reviewed_at DESC);
+
+CREATE OR REPLACE FUNCTION crm_validate_research_company_review_audit() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF NEW.nta_review_state='not_applicable' AND NEW.geography_status <> 'non_nevada' THEN
+    RAISE EXCEPTION 'audit not_applicable requires verified non-Nevada geography' USING ERRCODE='23514';
+  END IF;
+  IF NEW.nta_review_state='cleared' AND NEW.geography_status <> 'nevada' THEN
+    RAISE EXCEPTION 'audit NTA clearance requires explicit Nevada geography' USING ERRCODE='23514';
+  END IF;
+  IF NEW.review_state='owner_review' AND NOT ((NEW.geography_status='nevada' AND NEW.nta_review_state='cleared') OR (NEW.geography_status='non_nevada' AND NEW.nta_review_state='not_applicable')) THEN
+    RAISE EXCEPTION 'audit owner_review requires an explicit eligible geography/NTA decision' USING ERRCODE='23514';
+  END IF;
+  RETURN NEW;
+END $$;
+CREATE OR REPLACE FUNCTION crm_reject_research_company_review_audit_mutation() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  RAISE EXCEPTION 'company review audit records are immutable' USING ERRCODE='55000';
+END $$;
+DROP TRIGGER IF EXISTS crm_research_company_review_audit_valid ON crm_research_company_reviews;
+CREATE TRIGGER crm_research_company_review_audit_valid BEFORE INSERT ON crm_research_company_reviews FOR EACH ROW EXECUTE FUNCTION crm_validate_research_company_review_audit();
+DROP TRIGGER IF EXISTS crm_research_company_review_audit_immutable ON crm_research_company_reviews;
+CREATE TRIGGER crm_research_company_review_audit_immutable BEFORE UPDATE OR DELETE ON crm_research_company_reviews FOR EACH ROW EXECUTE FUNCTION crm_reject_research_company_review_audit_mutation();
 
 CREATE OR REPLACE FUNCTION crm_validate_research_company_review() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
