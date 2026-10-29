@@ -1,12 +1,15 @@
 import type { MetadataRoute } from "next";
 import { articles } from "./insights/articles";
 import { lessons } from "./learn/it-for-av/lessons";
+import { audioLessons } from "./learn/audio/lessons";
 import { absoluteUrl } from "./lib/site";
 
 const staticPages = [
   { path: "/", lastModified: "2026-07-24", changeFrequency: "monthly" as const, priority: 1 },
   { path: "/contact", lastModified: "2026-07-21", changeFrequency: "monthly" as const, priority: 0.8 },
   { path: "/insights", lastModified: "2026-09-16", changeFrequency: "weekly" as const, priority: 0.9 },
+  { path: "/learn", lastModified: "2026-10-29", changeFrequency: "weekly" as const, priority: 0.9 },
+  { path: "/learn/audio", lastModified: "2026-10-29", changeFrequency: "weekly" as const, priority: 0.9 },
   { path: "/learn/it-for-av/guides/snmp-lab", lastModified: "2026-10-21", changeFrequency: "monthly" as const, priority: 0.7 },
   { path: "/learn/it-for-av", lastModified: "2026-10-23", changeFrequency: "daily" as const, priority: 0.9 },
   { path: "/resources", lastModified: "2026-07-24", changeFrequency: "weekly" as const, priority: 0.9 },
@@ -40,5 +43,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.78,
   }));
 
-  return [...pages, ...insightPages, ...lessonPages];
+  const audioLessonPages: MetadataRoute.Sitemap = audioLessons.map((lesson) => ({
+    url: absoluteUrl(`/learn/audio/${lesson.slug}`), lastModified: new Date(lesson.publishedAt), changeFrequency: "monthly", priority: 0.78,
+  }));
+
+  return [...pages, ...insightPages, ...lessonPages, ...audioLessonPages];
 }

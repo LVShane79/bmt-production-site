@@ -111,7 +111,7 @@ export default async function LessonPage({ params }: PageProps) {
             ))}
 
             <section className="lesson-field-examples" id="field-examples">
-              <span>BMT / FIELD APPLICATION</span>
+              <span>FIELD APPLICATION</span>
               <h2>Put it in an AV system.</h2>
               <div>{lesson.examples.map((example) => <article key={example.title}><h3>{example.title}</h3><p>{example.text}</p></article>)}</div>
             </section>
