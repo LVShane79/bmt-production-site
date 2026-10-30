@@ -3,10 +3,10 @@ import { createHash, randomUUID } from "node:crypto";
 export const crmBackupTables = [
   "crm_leads", "crm_outreach_history", "crm_campaign_imports", "crm_campaign_drafts",
   "crm_campaign_recipients", "crm_work_outcomes",
-  "crm_research_cohorts", "crm_research_companies", "crm_research_evidence", "crm_campaign_evidence_versions", "crm_research_company_reviews",
+  "crm_research_cohorts", "crm_research_companies", "crm_research_evidence", "crm_campaign_evidence_versions", "crm_research_company_reviews", "crm_ai_draft_usage",
 ] as const;
 /** Bump this deliberately when a migration adds CRM data that must enter exports. */
-export const crmBackupSchemaVersion = "crm-data-tables/v3";
+export const crmBackupSchemaVersion = "crm-data-tables/v4";
 export type CrmBackupTable = (typeof crmBackupTables)[number];
 export type BackupTrigger = "daily" | "pre_campaign" | "manual";
 export type BackupState = "running" | "succeeded" | "failed";
@@ -97,3 +97,4 @@ export async function requireSuccessfulPreCampaignBackup(sql: SqlClient, runId: 
 }
 
 export const backupConfiguration = { dailyScheduleEnabled: false, providerConfigured: false, automaticRetentionEnabled: false, recommendedRetention: "daily for 35 days; monthly for 12 months; delete only after owner approval" } as const;
+

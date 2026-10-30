@@ -1,8 +1,8 @@
 # CRM backup foundation
 
-This implementation exports a consistent, application-level logical snapshot of every current CRM data table: leads, history, import markers, campaign drafts and recipients, work outcomes, research cohorts and companies, research evidence, campaign-evidence snapshots, and immutable company-review audits. It uses a deterministic SHA-256 manifest. The mutable backup-run ledger is intentionally not included in its own artifact. It records run state in `crm_backup_runs`; a reused run ID is safely rejected, and only one active run per trigger is allowed. A future campaign sender must obtain a successful `pre_campaign` run ID through `requireSuccessfulPreCampaignBackup` before it can attempt delivery.
+This implementation exports a consistent, application-level logical snapshot of every current CRM data table: leads, history, import markers, campaign drafts and recipients, work outcomes, research cohorts and companies, research evidence, campaign-evidence snapshots, immutable company-review audits, and the AI drafting usage ledger (including reservations, terminal outcomes, actual token counts, and spend). It uses a deterministic SHA-256 manifest. The mutable backup-run ledger is intentionally not included in its own artifact. It records run state in `crm_backup_runs`; a reused run ID is safely rejected, and only one active run per trigger is allowed. A future campaign sender must obtain a successful `pre_campaign` run ID through `requireSuccessfulPreCampaignBackup` before it can attempt delivery.
 
-The explicit whitelist is `crm-data-tables/v3`. Any newly migrated `crm_*` table (other than the self-referential `crm_backup_runs` ledger) blocks export until it is explicitly added to the whitelist, tests, and a bumped schema version.
+The explicit whitelist is `crm-data-tables/v4`. Any newly migrated `crm_*` table (other than the self-referential `crm_backup_runs` ledger) blocks export until it is explicitly added to the whitelist, tests, and a bumped schema version.
 
 Nothing is enabled by this code: no cron, provider connection, OAuth, upload, database migration, retention deletion, or email sending. The OneDrive adapter is intentionally an injected boundary: it must return the SHA-256 of the actual bytes it read back from the destination. Unknown upload outcomes fail closed; a fresh run ID is required for a retry. A crashed `running` record blocks the same trigger until an explicit, reviewed lease-expiry recovery marks it failed; it is never silently reclaimed.
 
@@ -10,7 +10,16 @@ Recommended (not enabled) retention: daily backups for 35 days and monthly backu
 
 ## Later activation approvals
 
-1. Apply migrations `0001`, `0002`, `0003_crm_backup_ledger`, `0004_research_campaign_foundation`, and `0005_company_review_controls` to the production CRM after an owner-reviewed snapshot.
+1. Apply migrations `0001`, `0002`, `0003_crm_backup_ledger`, `0004_research_campaign_foundation`, `0005_company_review_controls`, and `0006_crm_ai_draft_usage` to the production CRM after an owner-reviewed snapshot.
 2. Authorize the exact OneDrive destination `Black Mountain Technologies/Business Development CRM`, Microsoft delegated permissions, and a secure credential/deployment configuration.
 3. Review the scheduled daily export timing and enable the scheduler provider explicitly.
 4. Approve a sender integration only after it invokes the pre-campaign gate; failed or absent backups must block delivery.
+
+
+## AI ledger and restore compatibility
+
+Version v4 requires migration 0006 and exports all `crm_ai_draft_usage` rows. Restoring to an already-empty, fully migrated target preserves original request IDs, request timestamps, states, reservations, and actual usage/cost; it does not reset the monthly spend window or regenerate completed/uncertain requests. A target with any CRM data (including usage rows) is rejected. Existing immutable evidence and company-review audit checks remain intact.
+
+Historical v3 artifacts remain historical backups, but this v4 restore helper deliberately rejects them rather than silently substituting an empty AI ledger. Restoring an old artifact requires a separately reviewed recovery plan for the missing usage/spend history. Before first applying 0006, take the pre-migration snapshot using the reviewed v3 table set; after migration, use v4. Do not run v4 exports against a pre-0006 database.
+
+Recovery preserves spend captured in the snapshot, not requests made afterward. Keep AI drafting disabled during any restore and reconcile post-snapshot provider usage/reservations before re-enabling it; never treat an older backup as permission to reset or replenish the current-month budget.
