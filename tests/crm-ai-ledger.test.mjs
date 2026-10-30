@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
 
 const migration = await readFile("db/migrations/0006_crm_ai_draft_usage.sql", "utf8");
-const reservationCost = 304500;
+const reservationCost = 420631;
 
 async function ledger(t) {
   const db = new PGlite();
@@ -24,10 +24,10 @@ async function usage(db, id) {
 
 test("AI ledger shares the monthly dollar budget across distinct owner IDs", async t => {
   const db = await ledger(t);
-  // Nine reservations consume $2.7405, even when every request has a distinct owner.
-  for (let i = 0; i < 9; i++) assert.equal(await reserve(db, `r-${i}`, `owner-${i}`), "created");
+  // Seven reservations consume $2.944417, even when every request has a distinct owner.
+  for (let i = 0; i < 7; i++) assert.equal(await reserve(db, `r-${i}`, `owner-${i}`), "created");
   await assert.rejects(reserve(db, "over-budget", "another-owner"), /budget or rate limit/);
-  assert.equal((await db.query("SELECT count(*)::int AS count FROM crm_ai_draft_usage")).rows[0].count, 9);
+  assert.equal((await db.query("SELECT count(*)::int AS count FROM crm_ai_draft_usage")).rows[0].count, 7);
   assert.match(migration, /pg_advisory_xact_lock\(1129467201,1\)/);
   assert.doesNotMatch(migration, /pg_advisory_xact_lock\(hashtext\(p_owner\)\)/);
   // This executes SQL semantics sequentially; it is not a real PostgreSQL concurrency test.
@@ -37,11 +37,11 @@ test("AI ledger settles provider overhead above 3000 tokens up to the conservati
   const db = await ledger(t);
   await reserve(db, "overhead");
   assert.equal(await finish(db, "overhead", "completed", 3001, 3), "completed");
-  assert.equal((await usage(db, "overhead")).actual_usd_micros, 2265);
+  assert.equal((await usage(db, "overhead")).actual_usd_micros, 1206);
   await reserve(db, "ceiling");
-  assert.equal(await finish(db, "ceiling", "completed", 400000, 1000), "completed");
+  assert.equal(await finish(db, "ceiling", "completed", 1047576, 1000), "completed");
   const row = await usage(db, "ceiling");
-  assert.equal(row.actual_input_tokens, 400000);
+  assert.equal(row.actual_input_tokens, 1047576);
   assert.equal(row.actual_output_tokens, 1000);
   assert.equal(row.actual_usd_micros, reservationCost);
   assert.ok(row.completed_at);
@@ -51,7 +51,7 @@ test("AI ledger settles provider overhead above 3000 tokens up to the conservati
 test("AI ledger rejects missing, negative and above-ceiling actual usage without releasing reservation", async t => {
   const db = await ledger(t);
   await reserve(db, "invalid-usage");
-  for (const [input, output] of [[null, 0], [0, null], [-1, 0], [400001, 0], [0, -1], [0, 1001]]) {
+  for (const [input, output] of [[null, 0], [0, null], [-1, 0], [1047577, 0], [0, -1], [0, 1001]]) {
     await assert.rejects(finish(db, "invalid-usage", "completed", input, output), /invalid AI usage settlement/);
     assert.equal((await usage(db, "invalid-usage")).state, "reserved");
   }
@@ -69,7 +69,7 @@ test("AI ledger replays every state without creating another reservation or chan
     assert.equal(await reserve(db, id), state);
     assert.equal(await reserve(db, id, "different-owner"), state);
     if (state !== "reserved") {
-      assert.equal(await finish(db, id, "completed", 400000, 1000), state);
+      assert.equal(await finish(db, id, "completed", 1047576, 1000), state);
       assert.equal(await finish(db, id, "uncertain"), state);
     }
     assert.deepEqual(await usage(db, id), before);
@@ -79,7 +79,7 @@ test("AI ledger replays every state without creating another reservation or chan
 
 test("AI ledger retains uncertain spend and releases only confirmed completed excess", async t => {
   const db = await ledger(t);
-  for (let i = 0; i < 9; i++) {
+  for (let i = 0; i < 7; i++) {
     await reserve(db, `retained-${i}`, `owner-${i}`);
     await finish(db, `retained-${i}`, "uncertain");
   }
@@ -90,8 +90,8 @@ test("AI ledger retains uncertain spend and releases only confirmed completed ex
   await db.exec("TRUNCATE crm_ai_draft_usage");
   await reserve(db, "settled");
   await finish(db, "settled", "completed", 12, 3);
-  assert.equal((await usage(db, "settled")).actual_usd_micros, 23);
-  assert.equal(await reserve(db, "remaining-dollar-boundary", "other", 2999977), "created");
+  assert.equal((await usage(db, "settled")).actual_usd_micros, 10);
+  assert.equal(await reserve(db, "remaining-dollar-boundary", "other", 2999990), "created");
   await assert.rejects(reserve(db, "one-micro-over", "third", 1), /budget or rate limit/);
 });
 
@@ -109,7 +109,7 @@ test("AI ledger enforces the twenty-per-day boundary outside the minute window",
   const db = await ledger(t);
   const { seconds } = (await db.query("SELECT extract(epoch FROM clock_timestamp()-date_trunc('day',clock_timestamp()))::int AS seconds")).rows[0];
   if (seconds < 120) return t.skip("Day and minute windows overlap during the first two minutes of the day.");
-  await db.exec("INSERT INTO crm_ai_draft_usage(id,owner_id,requested_at,state,estimated_usd_micros,input_tokens,output_tokens,provider,model) SELECT 'day-'||i,'owner',clock_timestamp()-interval '2 minutes','failed',304500,0,1000,'openai','openai/gpt-5.4-mini' FROM generate_series(1,19) i");
+  await db.exec("INSERT INTO crm_ai_draft_usage(id,owner_id,requested_at,state,estimated_usd_micros,input_tokens,output_tokens,provider,model) SELECT 'day-'||i,'owner',clock_timestamp()-interval '2 minutes','failed',420631,0,1000,'openai','gpt-4.1-mini' FROM generate_series(1,19) i");
   assert.equal(await reserve(db, "twentieth"), "created");
   await assert.rejects(reserve(db, "twenty-first"), /budget or rate limit/);
 });
@@ -118,7 +118,8 @@ test("AI ledger enforces the three-hundred-per-month boundary outside the day wi
   const db = await ledger(t);
   const { first_day } = (await db.query("SELECT date_trunc('day',clock_timestamp())=date_trunc('month',clock_timestamp()) AS first_day")).rows[0];
   if (first_day) return t.skip("Day and month windows coincide on the first day; the stricter daily limit applies.");
-  await db.exec("INSERT INTO crm_ai_draft_usage(id,owner_id,requested_at,state,estimated_usd_micros,input_tokens,output_tokens,provider,model) SELECT 'month-'||i,'owner',date_trunc('month',clock_timestamp()),'failed',304500,0,1000,'openai','openai/gpt-5.4-mini' FROM generate_series(1,299) i");
+  await db.exec("INSERT INTO crm_ai_draft_usage(id,owner_id,requested_at,state,estimated_usd_micros,input_tokens,output_tokens,provider,model) SELECT 'month-'||i,'owner',date_trunc('month',clock_timestamp()),'failed',420631,0,1000,'openai','gpt-4.1-mini' FROM generate_series(1,299) i");
   assert.equal(await reserve(db, "three-hundredth"), "created");
   await assert.rejects(reserve(db, "three-hundred-first"), /budget or rate limit/);
 });
+

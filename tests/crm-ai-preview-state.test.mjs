@@ -63,6 +63,8 @@ test("UI wires preview tickets to pending controls and local-only editable field
   assert.match(source, /invalidateAi\(\);setDraftId/);
   assert.match(source, /invalidateAi\(\);setChosen/);
   assert.match(source, /aiContext===context&&preview/);
-  assert.match(source, /defaultValue=\{preview\.subject\}/);
+  assert.match(source, /<AiPreviewEditor/);
+  for (const field of ["updated_version", "review_state", "nta_review_state", "geography_status", "freshness", "fetched_at"]) assert.ok(source.includes(field));
   assert.match(source, /no automatic retry was made/);
 });
+
