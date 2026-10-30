@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
 import { freshnessFor, hiringSignalNotice, ntaState, syntheticEvidence, validateManualEvidence } from "../app/lib/research-foundation.ts";
 import { companyHoldReasons, companyReviewWrite, validateCompanyReview } from "../app/lib/company-review.ts";
+import { crmAiDraftEligibilitySql, crmAiDraftingStatus, validateCrmAiDraftRequest } from "../app/lib/crm-ai-drafting.ts";
 import { researchPanelView } from "../app/lib/research-panel-state.ts";
 
 test("manual evidence preserves provenance and rejects non-canonical source URLs",()=>{
@@ -84,4 +85,9 @@ test("company review endpoint is owner-gated, concurrency-protected, and UI keep
  assert.match(route,/ownerOrUnauthorized/);assert.match(route,/companyReviewWrite/);assert.match(route,/crypto\.randomUUID/);assert.doesNotMatch(route,/crm_leads|crm_campaign_recipients|sendMail|nodemailer/i);
  assert.match(ui,/Owner company review/);assert.match(ui,/Separate from evidence acceptance/);assert.match(ui,/Record owner company review/);assert.match(ui,/NTA decision/);assert.match(ui,/companyHoldReasons/);
  assert.match(migration,/ADD COLUMN IF NOT EXISTS review_rationale/);assert.match(migration,/crm_research_company_reviews/);assert.match(migration,/unknown or Nevada geography cannot be not_applicable/);assert.doesNotMatch(migration,/ALTER TABLE crm_leads/);
+});
+test("private AI draft scaffold fails closed and retains campaign evidence holds",async()=>{
+ const valid={draftId:"draft",messageVersion:"123",evidenceIds:["one","two"]};assert.deepEqual(validateCrmAiDraftRequest(valid),valid);assert.equal(validateCrmAiDraftRequest({...valid,evidenceIds:[]}),null);assert.equal(validateCrmAiDraftRequest({...valid,evidenceIds:["1","2","3","4"]}),null);assert.deepEqual(crmAiDraftingStatus,{enabled:false,provider:"none",reason:"configuration_required"});
+ assert.match(crmAiDraftEligibilitySql,/^SELECT e\.id FROM/);assert.match(crmAiDraftEligibilitySql,/owner_review/);assert.match(crmAiDraftEligibilitySql,/nta_review_state='cleared'/);assert.match(crmAiDraftEligibilitySql,/lead\.history_state='clear'/);assert.match(crmAiDraftEligibilitySql,/lead\.status NOT IN \('Bounced','Opted out'\)/);assert.doesNotMatch(crmAiDraftEligibilitySql,/editable_notes|message_body/i);
+ const [route,ui,doc]=await Promise.all([readFile("app/api/admin/crm/ai-drafts/route.ts","utf8"),readFile("app/admin/crm/campaign-evidence-link.tsx","utf8"),readFile("docs/crm-ai-drafting.md","utf8")]);assert.match(route,/ownerOrUnauthorized/);assert.match(route,/crmAiDraftEligibilitySql/);assert.match(route,/No CRM content was sent/);assert.doesNotMatch(route,/fetch\(|OPENAI_API_KEY|sendMail|nodemailer/i);assert.match(ui,/Create AI suggestion/);assert.match(ui,/cannot save, approve, attach, or send/);assert.match(doc,/CRM_AI_DRAFTING_MAX_REQUESTS_PER_HOUR/);assert.match(doc,/never lead email, notes, recipient IDs, history, or draft body/i);
 });
