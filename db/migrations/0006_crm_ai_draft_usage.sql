@@ -12,14 +12,18 @@ CREATE TABLE IF NOT EXISTS crm_ai_draft_usage (
 );
 CREATE INDEX IF NOT EXISTS crm_ai_draft_usage_owner_requested_idx ON crm_ai_draft_usage (owner_id, requested_at DESC);
 CREATE OR REPLACE FUNCTION crm_reserve_ai_draft_usage(p_id text,p_owner text,p_estimated_usd_micros bigint,p_input_tokens integer,p_output_tokens integer) RETURNS text LANGUAGE plpgsql AS $$
-DECLARE existing text; minute_count integer; day_count integer; month_count integer; month_cost bigint;
+DECLARE existing text; minute_count integer; day_count integer; month_count integer; month_cost bigint; reserved_at timestamptz;
 BEGIN
-  PERFORM pg_advisory_xact_lock(hashtext(p_owner));
+  -- One application-wide lock: different authorized owner IDs share the $3 budget.
+  -- Keep the namespace fixed; an owner-derived lock would allow cross-owner races.
+  PERFORM pg_advisory_xact_lock(1129467201,1);
+  reserved_at := clock_timestamp();
   SELECT state INTO existing FROM crm_ai_draft_usage WHERE id=p_id;
   IF FOUND THEN RETURN existing; END IF;
-  SELECT count(*) FILTER (WHERE requested_at>=clock_timestamp()-interval '1 minute'),count(*) FILTER (WHERE requested_at>=date_trunc('day',clock_timestamp())),count(*) FILTER (WHERE requested_at>=date_trunc('month',clock_timestamp())),COALESCE(sum(CASE WHEN state='completed' THEN actual_usd_micros ELSE estimated_usd_micros END) FILTER (WHERE requested_at>=date_trunc('month',clock_timestamp()) AND state IN ('reserved','completed','uncertain')),0) INTO minute_count,day_count,month_count,month_cost FROM crm_ai_draft_usage WHERE owner_id=p_owner;
+  SELECT count(*) FILTER (WHERE requested_at>=reserved_at-interval '1 minute'),count(*) FILTER (WHERE requested_at>=date_trunc('day',reserved_at)),count(*) FILTER (WHERE requested_at>=date_trunc('month',reserved_at)) INTO minute_count,day_count,month_count FROM crm_ai_draft_usage WHERE owner_id=p_owner;
+  SELECT COALESCE(sum(CASE WHEN state='completed' THEN actual_usd_micros ELSE estimated_usd_micros END),0) INTO month_cost FROM crm_ai_draft_usage WHERE requested_at>=date_trunc('month',reserved_at) AND state IN ('reserved','completed','uncertain');
   IF minute_count>=5 OR day_count>=20 OR month_count>=300 OR month_cost+p_estimated_usd_micros>3000000 THEN RAISE EXCEPTION 'AI drafting budget or rate limit exceeded' USING ERRCODE='P0001'; END IF;
-  INSERT INTO crm_ai_draft_usage (id,owner_id,state,estimated_usd_micros,input_tokens,output_tokens,provider,model) VALUES (p_id,p_owner,'reserved',p_estimated_usd_micros,p_input_tokens,p_output_tokens,'openai','openai/gpt-5.4-mini');
+  INSERT INTO crm_ai_draft_usage (id,owner_id,requested_at,state,estimated_usd_micros,input_tokens,output_tokens,provider,model) VALUES (p_id,p_owner,reserved_at,'reserved',p_estimated_usd_micros,p_input_tokens,p_output_tokens,'openai','openai/gpt-5.4-mini');
   RETURN 'created';
 END $$;
 CREATE OR REPLACE FUNCTION crm_finish_ai_draft_usage(p_id text,p_state text,p_actual_input_tokens integer DEFAULT NULL,p_actual_output_tokens integer DEFAULT NULL,p_error_code text DEFAULT NULL) RETURNS text LANGUAGE plpgsql AS $$
@@ -30,7 +34,9 @@ BEGIN
   IF current_state<>'reserved' THEN RETURN current_state; END IF;
   IF p_state NOT IN ('completed','failed','uncertain') THEN RAISE EXCEPTION 'invalid AI usage final state'; END IF;
   IF p_state='completed' THEN
-    IF p_actual_input_tokens IS NULL OR p_actual_output_tokens IS NULL OR p_actual_input_tokens<0 OR p_actual_input_tokens>3000 OR p_actual_output_tokens<0 OR p_actual_output_tokens>1000 THEN RAISE EXCEPTION 'invalid AI usage settlement'; END IF;
+    -- Provider usage includes protocol/schema overhead; the 3,000-byte prompt guard
+    -- is not an actual-token limit. The conservative reservation covers this ceiling.
+    IF p_actual_input_tokens IS NULL OR p_actual_output_tokens IS NULL OR p_actual_input_tokens<0 OR p_actual_input_tokens>400000 OR p_actual_output_tokens<0 OR p_actual_output_tokens>1000 THEN RAISE EXCEPTION 'invalid AI usage settlement'; END IF;
     actual_cost:=ceil(p_actual_input_tokens*0.75+p_actual_output_tokens*4.5);
     UPDATE crm_ai_draft_usage SET state='completed',actual_input_tokens=p_actual_input_tokens,actual_output_tokens=p_actual_output_tokens,actual_usd_micros=actual_cost,completed_at=clock_timestamp(),settled_at=clock_timestamp(),error_code=NULL WHERE id=p_id;
   ELSE
@@ -38,3 +44,4 @@ BEGIN
   END IF;
   RETURN p_state;
 END $$;
+
