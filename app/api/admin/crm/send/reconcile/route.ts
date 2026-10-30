@@ -1,0 +1,7 @@
+import { neon } from "@neondatabase/serverless";
+import { NextResponse } from "next/server";
+import { ownerOrUnauthorized } from "../../../../../lib/admin-auth";
+import { reconcileReviewedSend,validSendOrigin,validateSendAction,type SendSql } from "../../../../../lib/crm-human-send";
+import { getCrmGmailTransport } from "../../../../../lib/crm-gmail-oauth";
+export const runtime="nodejs";export const maxDuration=60;export const dynamic="force-dynamic";const headers={"Cache-Control":"private, no-store"};
+export async function POST(request:Request){const gate=await ownerOrUnauthorized();if(gate instanceof NextResponse)return gate;if(!validSendOrigin(request,process.env))return NextResponse.json({error:"Same-origin reconciliation required."},{status:403,headers});const id=validateSendAction(await request.json().catch(()=>null),"attemptId");if(!id)return NextResponse.json({error:"Choose and confirm the attempt to reconcile."},{status:400,headers});if(!process.env.DATABASE_URL||process.env.CRM_GMAIL_CONNECTION_ENABLED!=="true")return NextResponse.json({error:"Connect Gmail to inspect provider receipts. Sending need not be enabled."},{status:503,headers});try{const sql=neon(process.env.DATABASE_URL) as unknown as SendSql;const transport=await getCrmGmailTransport(gate.userId,sql,process.env);return NextResponse.json(await reconcileReviewedSend(sql,gate.userId,id,transport),{headers});}catch{return NextResponse.json({error:"Receipt reconciliation is unconfirmed. No email was sent or retried; the existing attempt remains blocked."},{status:503,headers});}}

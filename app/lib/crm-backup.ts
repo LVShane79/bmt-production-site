@@ -3,10 +3,10 @@ import { createHash, randomUUID } from "node:crypto";
 export const crmBackupTables = [
   "crm_leads", "crm_outreach_history", "crm_campaign_imports", "crm_campaign_drafts",
   "crm_campaign_recipients", "crm_work_outcomes",
-  "crm_research_cohorts", "crm_research_companies", "crm_research_evidence", "crm_campaign_evidence_versions", "crm_research_company_reviews", "crm_ai_draft_usage",
+  "crm_research_cohorts", "crm_research_companies", "crm_research_evidence", "crm_campaign_evidence_versions", "crm_research_company_reviews", "crm_ai_draft_usage", "crm_send_reviews", "crm_send_attempts", "crm_send_outcomes",
 ] as const;
 /** Bump this deliberately when a migration adds CRM data that must enter exports. */
-export const crmBackupSchemaVersion = "crm-data-tables/v4";
+export const crmBackupSchemaVersion = "crm-data-tables/v5";
 export type CrmBackupTable = (typeof crmBackupTables)[number];
 export type BackupTrigger = "daily" | "pre_campaign" | "manual";
 export type BackupState = "running" | "succeeded" | "failed";
@@ -34,7 +34,7 @@ export async function exportCrmLogicalBackup(sql: SqlClient, options: { runId?: 
   // separate requests could otherwise capture a partially-updated CRM record.
   const fields = crmBackupTables.map(table => `'${table}',COALESCE((SELECT jsonb_agg(row_data) FROM (SELECT * FROM ${quote(table)} ORDER BY 1) row_data),'[]'::jsonb)`).join(",");
   const known = crmBackupTables.map(table => `'${table}'`).join(",");
-  const row = (await sql.query<{ data: Record<CrmBackupTable, Record<string, unknown>[]>; unknown_tables: string[] }>(`SELECT jsonb_build_object(${fields}) AS data,COALESCE((SELECT jsonb_agg(table_name ORDER BY table_name) FROM information_schema.tables WHERE table_schema='public' AND table_name LIKE 'crm_%' AND table_name <> 'crm_backup_runs' AND table_name NOT IN (${known})),'[]'::jsonb) AS unknown_tables`))[0];
+  const row = (await sql.query<{ data: Record<CrmBackupTable, Record<string, unknown>[]>; unknown_tables: string[] }>(`SELECT jsonb_build_object(${fields}) AS data,COALESCE((SELECT jsonb_agg(table_name ORDER BY table_name) FROM information_schema.tables WHERE table_schema='public' AND table_name LIKE 'crm_%' AND table_name NOT IN ('crm_backup_runs','crm_gmail_connections','crm_gmail_oauth_states') AND table_name NOT IN (${known})),'[]'::jsonb) AS unknown_tables`))[0];
   if (!row?.data) throw new Error("CRM backup export returned no data");
   if (row.unknown_tables?.length) throw new Error(`CRM backup export blocked: unrecognized CRM tables (${row.unknown_tables.join(", ")}); extend crmBackupTables and bump crmBackupSchemaVersion`);
   const data = Object.fromEntries(crmBackupTables.map(table => [table, row.data[table] ?? []])) as Record<CrmBackupTable, Record<string, unknown>[]>;
@@ -51,12 +51,14 @@ export function validateLogicalBackup(backup: LogicalBackup): boolean {
   return crmBackupTables.every(table => backup.manifest.tables[table]?.count === backup.data[table]?.length && backup.manifest.tables[table]?.sha256 === sha256(canonical(backup.data[table])));
 }
 
-/** Explicit restore helper for an already-empty reviewed target. It never contacts a provider. */
+/** Explicit restore into an empty reviewed target; OAuth operational rows must also be empty.
+ * Send claims/outcomes restore unchanged, but OAuth credentials are never exported: reconnect explicitly.
+ * Keep sends disabled until post-snapshot provider reconciliation; older snapshots can omit later attempts. */
 export async function restoreCrmLogicalBackup(sql: TransactionalSqlClient, backup: LogicalBackup): Promise<void> {
   if (!validateLogicalBackup(backup)) throw new Error("CRM restore blocked: invalid or unrecognized backup manifest");
   const known = crmBackupTables.map(table => `'${table}'`).join(",");
-  const nonempty = crmBackupTables.map(table => `SELECT '${table}' AS table_name WHERE EXISTS (SELECT 1 FROM ${quote(table)})`).join(" UNION ALL ");
-  const preflight = (await sql.query<{ missing_tables: string[]; nonempty_tables: string[]; unknown_tables: string[] }>(`SELECT COALESCE((SELECT jsonb_agg(expected.table_name ORDER BY expected.table_name) FROM (VALUES ${crmBackupTables.map(table => `('${table}')`).join(",")}) AS expected(table_name) LEFT JOIN information_schema.tables actual ON actual.table_schema='public' AND actual.table_name=expected.table_name WHERE actual.table_name IS NULL),'[]'::jsonb) AS missing_tables,COALESCE((SELECT jsonb_agg(table_name ORDER BY table_name) FROM (${nonempty}) AS occupied),'[]'::jsonb) AS nonempty_tables,COALESCE((SELECT jsonb_agg(table_name ORDER BY table_name) FROM information_schema.tables WHERE table_schema='public' AND table_name LIKE 'crm_%' AND table_name <> 'crm_backup_runs' AND table_name NOT IN (${known})),'[]'::jsonb) AS unknown_tables`))[0];
+  const nonempty = [...crmBackupTables, "crm_gmail_connections", "crm_gmail_oauth_states"].map(table => `SELECT '${table}' AS table_name WHERE EXISTS (SELECT 1 FROM ${quote(table)})`).join(" UNION ALL ");
+  const preflight = (await sql.query<{ missing_tables: string[]; nonempty_tables: string[]; unknown_tables: string[] }>(`SELECT COALESCE((SELECT jsonb_agg(expected.table_name ORDER BY expected.table_name) FROM (VALUES ${crmBackupTables.map(table => `('${table}')`).join(",")}) AS expected(table_name) LEFT JOIN information_schema.tables actual ON actual.table_schema='public' AND actual.table_name=expected.table_name WHERE actual.table_name IS NULL),'[]'::jsonb) AS missing_tables,COALESCE((SELECT jsonb_agg(table_name ORDER BY table_name) FROM (${nonempty}) AS occupied),'[]'::jsonb) AS nonempty_tables,COALESCE((SELECT jsonb_agg(table_name ORDER BY table_name) FROM information_schema.tables WHERE table_schema='public' AND table_name LIKE 'crm_%' AND table_name NOT IN ('crm_backup_runs','crm_gmail_connections','crm_gmail_oauth_states') AND table_name NOT IN (${known})),'[]'::jsonb) AS unknown_tables`))[0];
   if (!preflight || preflight.missing_tables?.length || preflight.unknown_tables?.length) throw new Error("CRM restore blocked: target schema is incompatible");
   if (preflight.nonempty_tables?.length) throw new Error(`CRM restore blocked: target contains CRM data (${preflight.nonempty_tables.join(",")})`);
   const statements: SqlStatement[] = [];
